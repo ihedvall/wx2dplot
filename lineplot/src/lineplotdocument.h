@@ -4,6 +4,7 @@
  */
 #pragma once
 #include <memory>
+#include <string>
 
 #include <wx/docview.h>
 #include <wx/wx.h>
@@ -19,7 +20,9 @@ public:
   LinePlotDocument() = default;
 
   [[nodiscard]] static MainFrame* GetMainFrame();
-  [[nodiscard]] Project& GetProject() { return project_; }
+
+  void SetProject(std::unique_ptr<Project> project);
+  [[nodiscard]] Project* GetProject() const { return project_.get(); }
 
   bool OnNewDocument() override;
   bool OnCloseDocument() override;
@@ -30,8 +33,8 @@ protected:
   bool DoSaveDocument(const wxString& filename) override;
 
 private:
-
-  Project project_;
+  std::wstring filename_;
+  std::unique_ptr<Project> project_;
 
   wxDECLARE_DYNAMIC_CLASS(LinePlotDocument);
   wxDECLARE_EVENT_TABLE();

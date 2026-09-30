@@ -9,37 +9,20 @@
 
 namespace plot {
 
-Signal::Signal(const Signal &signal)
-: selected_(signal.selected_),
-  name_(signal.name_),
-  description_(signal.description_),
-  unit_(signal.unit_),
-  enum_list_(signal.enum_list_),
-  master_name_(signal.master_name_),
-  master_unit_(signal.master_unit_),
-  min_(signal.min_),
-  max_(signal.max_),
-  lrv_(signal.lrv_),
-  value_list_(signal.value_list_)
-{
+double Signal::GetMin() const {
+  if (min_ < max_) {
+    return min_;
+  }
+  const SignalValue min = value_list_.Min();
+  return min.IsValid() ? min.GetValue() : 0.0;
 }
 
-Signal &Signal::operator=(const Signal &signal) {
-  if (&signal == this) {
-    return  *this;
+double Signal::GetMax() const {
+  if (min_ < max_) {
+    return max_;
   }
-  selected_ = signal.selected_;
-  name_ = signal.name_;
-  description_ = signal.description_;
-  unit_ = signal.unit_;
-  enum_list_ = signal.enum_list_;
-  master_name_ = signal.master_name_;
-  master_unit_ = signal.master_unit_;
-  min_ = signal.min_;
-  max_ = signal.max_;
-  lrv_ = signal.lrv_;
-  value_list_ = signal.value_list_;
-  return *this;
+  const SignalValue max = value_list_.Max();
+  return max.IsValid() ? max.GetValue() : 0.0;
 }
 
 std::string Signal::GetEnum(int value) const {
@@ -51,104 +34,23 @@ std::string Signal::GetEnum(int value) const {
 }
 
 bool Signal::IsLatestUpdated() const {
-  std::lock_guard lock(value_mutex_);
-  return lrv_.IsUpdated();
+  return value_list_.IsLastUpdated();
 }
 
-void Signal::SetLatestValue(double value, double master_value, bool valid) {
-  std::lock_guard lock(value_mutex_);
-  return lrv_.SetValue(value, master_value, valid);
+void Signal::SetLatestValue(const SignalValue& value) {
+  value_list_.SetLastValue(value);
 }
 
-bool Signal::GetLatestValue(double &value, double &master_value) const {
-  std::lock_guard lock(value_mutex_);
-  return lrv_.GetValue(value, master_value);
+SignalValue Signal::GetLatestValue() const {
+  return value_list_.GetLastValue();
+}
+SignalValueList& Signal::SignalValues() {
+  return value_list_;
+}
+const SignalValueList& Signal::SignalValues() const {
+  return value_list_;
 }
 
-void Signal::AttachValues(const std::vector<SignalValue> &values) {
-  std::lock_guard lock(value_mutex_);
-  value_list_.clear();
-  value_list_.insert(value_list_.end(),
-                     values.cbegin(), values.cend());
-  // Update last reported value
-  if (!value_list_.empty()) {
-    const SignalValue& last_value = value_list_.back();
-    lrv_ = last_value;
-  }
-}
 
-void Signal::ResetValues() {
-  std::lock_guard lock(value_mutex_);
-  value_list_.clear();
-  value_list_.shrink_to_fit();
-  value_list_.SetUpdated(true);
-  lrv_.SetValue(0.0,0.0,false);
-}
-
-void Signal::AddValue(const SignalValue& value) {
-  std::lock_guard lock(value_mutex_);
-  value_list_.emplace_back(value);
-  lrv_ = value;
-}
-
-void Signal::PopValue() {
-  std::lock_guard lock(value_mutex_);
-  value_list_.pop_front();
-  if (!value_list_.empty()) {
-    lrv_.SetValue(0.0, 0.0, false);;
-  }
-}
-
-void Signal::CalculateMinMax(bool include_zero) {
-  std::lock_guard lock(value_mutex_);
-
-  if (value_list_.empty()) {
-    return;
-  }
-  bool first_value = true;
-  for (const SignalValue& value : value_list_) {
-    const double val = value.GetValue();
-    if (first_value) {
-      min_ = val;
-      max_ = val;
-      first_value = false;
-    } else {
-      min_ = std::min(min_, val);
-      max_ = std::max(max_, val);
-    }
-  }
-
-  if (include_zero) {
-    if (max_ < 0.0 && min_ < 0.0) {
-      max_ = 0.0;
-    } else if (max_ > 0.0 && min_ > 0.0) {
-      min_ = 0.0;
-    }
-  }
-}
-
-SignalValue Signal::GetValueByIndex(size_t index) const {
-  SignalValue value;
-  std::lock_guard lock(value_mutex_);
-  if (index < value_list_.size()) {
-    value = value_list_[index];
-  }
-  return value;
-}
-
-double Signal::GetMasterMin() const {
-  std::lock_guard lock(value_mutex_);
-  return value_list_.empty() ? 0.0 : value_list_.front().GetValue();
-}
-
-double Signal::GetMasterMax() const {
-  std::lock_guard lock(value_mutex_);
-  return value_list_.empty() ? 0.0 : value_list_.back().GetValue();
-}
-
-size_t Signal::GetSize() const {
-  std::lock_guard lock(value_mutex_);
-  return value_list_.size();
-}
 
 } // plot

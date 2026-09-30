@@ -33,14 +33,24 @@ add_library(wx2dplot
         src/plotlogstream.cpp include/plot/plotlogstream.h
         src/alphanumericdisplay.cpp include/plot/alphanumericdisplay.h
         src/project.cpp include/plot/project.h
-        src/lineplotdisplay.cpp
-        include/plot/lineplotdisplay.h)
+        src/lineplotdisplay.cpp include/plot/lineplotdisplay.h
+        src/masterdisplay.cpp include/plot/masterdisplay.h
+        src/legenddisplay.cpp include/plot/legenddisplay.h
+        src/lineplotwindow.cpp include/plot/lineplotwindow.h
+        src/sinusproject.cpp include/plot/sinusproject.h
+        src/xaxis.cpp include/plot/xaxis.h
+        src/yaxislist.cpp include/plot/yaxislist.h
+        src/yaxis.cpp include/plot/yaxis.h
+        src/masterplotdisplay.cpp
+        include/plot/masterplotdisplay.h
+        lineplot/src/projectdisplay.cpp
+        include/plot/projectdisplay.h)
 
 target_include_directories(wx2dplot PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-target_include_directories(wx2dplot PRIVATE ${wxmathplot_SOURCE_DIR})
+#target_include_directories(wx2dplot PRIVATE ${wxmathplot_SOURCE_DIR})
 
 target_link_libraries(wx2dplot PRIVATE
         wxmathplot_static

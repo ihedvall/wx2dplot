@@ -12,7 +12,8 @@ public:
  SignalValue(double value, double master_value, bool valid = true);
  SignalValue(const SignalValue& value);
 
- SignalValue& operator=(const SignalValue& value);
+ SignalValue& operator= (const SignalValue& value);
+ bool operator< (const SignalValue& value) const;
 
  void SetUpdated(bool updated) const { updated_ = updated; }
  [[nodiscard]] bool IsUpdated() const { return updated_; }

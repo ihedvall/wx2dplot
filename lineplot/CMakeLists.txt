@@ -15,11 +15,10 @@ add_executable(lineplot
         src/windowid.h
         src/lineplotapp.h src/lineplotapp.cpp
         src/mainframe.cpp src/mainframe.h
-        src/lineplotframe.cpp src/lineplotframe.h
         src/lineplotdocument.cpp src/lineplotdocument.h
         src/lineplotview.cpp src/lineplotview.h)
 
-target_include_directories(lineplot PRIVATE ${wxmathplot_SOURCE_DIR})
+#target_include_directories(lineplot PRIVATE ${wxmathplot_SOURCE_DIR})
 
 if(MSVC)
     target_link_options(lineplot PRIVATE /SUBSYSTEM:WINDOWS)

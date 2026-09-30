@@ -10,23 +10,22 @@
 
 #include <util/timestamp.h>
 #include <util/utilfactory.h>
-
 #include <wx/aboutdlg.h>
-#include <wx/config.h>
 #include <wx/app.h>
+#include <wx/config.h>
+#include <wx/docview.h>
 
 #include <array>
-#include <string>
+#include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <filesystem>
+#include <string>
 
-#include <boost/algorithm/string.hpp>
-
-#include "plot/plotlogstream.h"
-
+#include "../../include/plot/lineplotwindow.h"
 #include "lineplotapp.h"
 #include "lineplotdocument.h"
-#include "lineplotframe.h"
+#include "plot/plotlogstream.h"
+#include "plot/sinusproject.h"
 #include "windowid.h"
 
 using namespace util;
@@ -41,18 +40,20 @@ namespace plot {
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxDocParentFrame)
   EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
+  EVT_MENU(kIdSinusProject, MainFrame::OnSinusProject)
+  EVT_UPDATE_UI(kIdSinusProject, MainFrame::OnUpdateEmptyProject)
   EVT_CLOSE(MainFrame::OnClose)
   EVT_DROP_FILES(MainFrame::OnDropFiles)
   EVT_TIMER(kIdMainFrameTimer, MainFrame::OnTimer)
-  EVT_MENU_RANGE(kIdAppearanceSystem, kIdAppearanceLight,
-    MainFrame::OnAppearance)
+  EVT_MENU_RANGE(kIdAppearanceSystem, kIdAppearanceLight, MainFrame::OnAppearance)
+  EVT_MENU_RANGE(kIdSystemColor, kIdCaviarColor, MainFrame::OnGraphColor)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(wxDocManager* doc_manager,
                                      const wxString& title,
                                      const wxPoint& start_pos,
                                      const wxSize& start_size, bool maximized)
-    : wxDocParentFrame(doc_manager, nullptr, wxID_ANY, title, start_pos,
+    : wxDocParentFrame(doc_manager, nullptr, kIdMainFrame, title, start_pos,
                        start_size) {
   wxDocParentFrame::SetMinSize({-1, 600});
 #ifdef _WIN32
@@ -83,29 +84,79 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   menu_file->Append(wxID_EXIT);
 
   doc_manager->FileHistoryUseMenu(menu_file);
-  if (auto* app_config = wxConfig::Get(); app_config != nullptr) {
+  auto* app_config = wxConfig::Get();
+  if (app_config != nullptr) {
     doc_manager->FileHistoryLoad(*app_config);
   }
-  auto* menu_appearance = new wxMenu;
-  menu_appearance->AppendRadioItem(kIdAppearanceSystem,
+
+  auto* menu_demo = new wxMenu;
+  menu_demo->Append(kIdSinusProject, "Simple Sinus Project");
+
+  // GRAPH COLOR SCHEME
+  auto* menu_graph_color = new wxMenu;
+  menu_graph_color->AppendRadioItem(kIdSystemColor, "System Colours",
+    "Let the system colours define the graph colours.");
+  menu_graph_color->AppendRadioItem(kIdLightColor, "Light Colours",
+    "Classic Window colour for the graph. Typical outdoor use.");
+  menu_graph_color->AppendRadioItem(kIdDarkColor, "Dark Colours",
+    "Dark colours for the graphs. Typical developer use.");
+  menu_graph_color->AppendRadioItem(kIdNoirColor, "Noir Colours",
+    "Dark grey colours for the graph. Easy on the eyes.");
+  menu_graph_color->AppendRadioItem(kIdCaviarColor, "Caviar Colours",
+    "Dark blue colours for the graph. Best visibility.");
+
+  // ReSharper disable once CppTooWideScope
+  const mp_Colour_Scheme mp_scheme = mpColourScheme::Instance().GetColourScheme();
+
+  switch (mp_scheme) {
+    case mp_Colour_Scheme::SystemMode:
+      menu_graph_color->Check(kIdSystemColor, true);
+      break;
+
+    case mp_Colour_Scheme::LightMode:
+      menu_graph_color->Check(kIdLightColor, true);
+      break;
+
+    case mp_Colour_Scheme::DarkMode:
+      menu_graph_color->Check(kIdDarkColor, true);
+      break;
+
+    case mp_Colour_Scheme::NoirMode:
+      menu_graph_color->Check(kIdNoirColor, true);
+      break;
+
+    case mp_Colour_Scheme::CaviarMode:
+      menu_graph_color->Check(kIdCaviarColor, true);
+      break;
+
+    default:
+      break;
+  }
+
+  // SYSTEM COLOR
+  auto* menu_system_color = new wxMenu;
+  menu_system_color->AppendRadioItem(kIdAppearanceSystem,
     "System Mode","Let the system choose the light or dark mode");
-  menu_appearance->AppendRadioItem(kIdAppearanceDark,
+  menu_system_color->AppendRadioItem(kIdAppearanceDark,
     "Dark Mode", "Select the dark mode");
-  menu_appearance->AppendRadioItem(kIdAppearanceLight,
+  menu_system_color->AppendRadioItem(kIdAppearanceLight,
     "Light Mode", "Select the light mode");
 
   auto& app = wxGetApp();
   switch (app.GetAppearance()) {
     case wxApp::Appearance::System:
-      menu_appearance->Check(kIdAppearanceSystem, true);
+      menu_system_color->Check(kIdAppearanceSystem, true);
       break;
 
     case wxApp::Appearance::Dark:
-      menu_appearance->Check(kIdAppearanceDark, true);
+      menu_system_color->Check(kIdAppearanceDark, true);
       break;
 
     case wxApp::Appearance::Light:
-      menu_appearance->Check(kIdAppearanceLight, true);
+      menu_system_color->Check(kIdAppearanceLight, true);
+      break;
+
+    default:
       break;
   }
 
@@ -115,14 +166,14 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   menu_about->Append(kIdOpenLogFile, "Open Log File",
     "Opens the log file in the default text editor.");
   menu_about->AppendSeparator();
-  menu_about->AppendSubMenu(menu_appearance, "Appearance",
-    "Select the application colour scheme.");
-  menu_about->AppendSeparator();
   menu_about->Append(wxID_ABOUT, wxGetStockLabel(wxID_ABOUT),
     "Opens a information dialog that describe this application.");
 
   menu_bar_ = new wxMenuBar;
   menu_bar_->Append(menu_file, wxGetStockLabel(wxID_FILE));
+  menu_bar_->Append(menu_demo, "Demo");
+  menu_bar_->Append(menu_graph_color, "Graph Color");
+  menu_bar_->Append(menu_system_color, "System Color");
   menu_bar_->Append(menu_about, wxGetStockLabel(wxID_HELP));
   wxFrameBase::SetMenuBar(menu_bar_);
 
@@ -139,12 +190,12 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
     status_bar_->SetStatusText("Time", 1);
   }
 
-  frame_ = new LinePlotFrame(this);
+  frame_ = new LinePlotWindow(this);
   timer_ = new wxTimer(this, kIdMainFrameTimer);
   timer_->Start(500);
 }
 
-LinePlotFrame* MainFrame::GetFrame() const {
+LinePlotWindow* MainFrame::GetFrame() const {
   return frame_;
 }
 
@@ -156,6 +207,21 @@ LinePlotDocument* MainFrame::GetDocument() {
                   doc_manager->GetCurrentDocument());
   }
   return nullptr;
+}
+
+void MainFrame::SetTitle(const wxString& title) {
+  std::wstringstream temp;
+  const auto& app = wxGetApp();
+  temp << app.GetAppName();
+  const auto* doc = GetDocument();
+  const Project* project = doc != nullptr ? doc->GetProject() : nullptr;
+  if (project != nullptr && !project->GetName().empty()) {
+    temp << " - " << wxString::FromUTF8(project->GetName());
+  }
+  if (doc != nullptr && !doc->GetFilename().empty()) {
+    temp << " - " << doc->GetUserReadableName();
+  }
+  wxDocParentFrame::SetTitle(temp.str());
 }
 
 void MainFrame::OnClose(wxCloseEvent &event) {
@@ -180,7 +246,7 @@ void MainFrame::OnClose(wxCloseEvent &event) {
   event.Skip(true);
 }
 
-void MainFrame::OnAbout(wxCommandEvent&) {
+void MainFrame::OnAbout(wxCommandEvent&) { // NOLINT(*-convert-member-functions-to-static)
   wxAboutDialogInfo info;
   info.SetName("Line Plot Application");
   info.SetVersion("1.0");
@@ -256,8 +322,51 @@ void MainFrame::OnAppearance(wxCommandEvent& event) {
   }
 }
 
+void MainFrame::OnGraphColor(wxCommandEvent& event) {
+   if (menu_bar_ == nullptr) {
+    PLOT_ERROR() << "Menu bar is not initialized.";
+    return;
+  }
 
-void MainFrame::OnDropFiles(wxDropFilesEvent& event) {
+  mp_Colour_Scheme old_scheme = mpColourScheme::Instance().GetColourScheme();
+  mp_Colour_Scheme new_scheme = old_scheme;
+  switch (event.GetId()) {
+    case kIdLightColor:
+      new_scheme = mp_Colour_Scheme::LightMode;
+      break;
+
+    case kIdDarkColor:
+      new_scheme = mp_Colour_Scheme::DarkMode;
+      break;
+
+    case kIdNoirColor:
+      new_scheme = mp_Colour_Scheme::NoirMode;
+      break;
+
+    case kIdCaviarColor:
+      new_scheme = mp_Colour_Scheme::CaviarMode;
+      break;
+
+    case kIdSystemColor:
+    default:
+      new_scheme = mp_Colour_Scheme::SystemMode;
+      break;
+  }
+  if (new_scheme != old_scheme) {
+    if (auto* app_config = wxConfig::Get(); app_config != nullptr) {
+      app_config->Write("/MainWin/GraphColor", static_cast<int>(new_scheme));
+    }
+    wxMessageBox(
+      "You need to restart the application\n"
+        "before the changes take effect.",
+        "Restart the application",
+        wxOK | wxCENTER | wxICON_INFORMATION);
+  }
+}
+
+
+
+void MainFrame::OnDropFiles(wxDropFilesEvent& event) { // NOLINT(*-convert-member-functions-to-static)
   const int file_count = event.GetNumberOfFiles();
   const wxString* file_list = event.GetFiles();
   auto* man = wxDocManager::GetDocumentManager();
@@ -288,8 +397,46 @@ void MainFrame::OnDropFiles(wxDropFilesEvent& event) {
   }
 }
 
+void MainFrame::OnSinusProject(wxCommandEvent& event) { // NOLINT(*-convert-member-functions-to-static)
+  auto* doc = GetDocument();
+  Project* project = doc != nullptr ? doc->GetProject() : nullptr;
+  if (project != nullptr) {
+    PLOT_ERROR() << "Project is not empty. Cannot add a demo project.";
+    return;
+  }
+  auto* doc_manager = wxDocManager::GetDocumentManager();
+  if (doc_manager == nullptr) {
+    return;
+  }
+  const bool close = doc_manager->CloseDocuments();
+  if (!close) {
+    PLOT_ERROR() << "Cannot close documents.";
+    return;
+  }
+  wxDocument* new_doc = doc_manager->CreateNewDocument();
+  if (new_doc == nullptr) {
+    PLOT_ERROR() << "Cannot create a new document.";
+    return;
+  }
+  doc = GetDocument();
+  if (doc == nullptr) {
+    PLOT_ERROR() << "Cannot get document.";
+    return;
+  }
 
-void MainFrame::OnUpdateNoDocument(wxUpdateUIEvent& event) {
+  auto sinus_project = std::make_unique<SinusProject>();
+  doc->SetProject(std::move(sinus_project));
+  doc->Modify(false);
+
+}
+
+void MainFrame::OnUpdateEmptyProject(wxUpdateUIEvent& event) { // NOLINT(*-convert-member-functions-to-static)
+  auto* doc = GetDocument();
+  const Project* project = doc != nullptr ? doc->GetProject() : nullptr;
+  event.Enable(project == nullptr);
+}
+
+void MainFrame::OnUpdateNoDocument(wxUpdateUIEvent& event) { // NOLINT(*-convert-member-functions-to-static)
   if (const auto* doc = GetDocument();
       doc != nullptr) {
     event.Enable(true);

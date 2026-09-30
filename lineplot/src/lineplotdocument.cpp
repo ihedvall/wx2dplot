@@ -4,23 +4,19 @@
  */
 #include "lineplotdocument.h"
 
+#include <plot/plotlogstream.h>
 #include <util/stringutil.h>
-
 #include <wx/config.h>
 #include <wx/progdlg.h>
 
-#include <filesystem>
 #include <atomic>
-#include <thread>
 #include <chrono>
+#include <filesystem>
+#include <thread>
 
-
-#include <plot/plotlogstream.h>
-
-#include "mainframe.h"
+#include "../../include/plot/lineplotwindow.h"
 #include "lineplotapp.h"
-#include "lineplotframe.h"
-
+#include "mainframe.h"
 #include "windowid.h"
 
 using namespace std::filesystem;
@@ -37,6 +33,10 @@ MainFrame* LinePlotDocument::GetMainFrame() {
   return dynamic_cast<MainFrame*>(wxGetApp().GetTopWindow());
 }
 
+void LinePlotDocument::SetProject(std::unique_ptr<Project> project) {
+  project_ = std::move(project);
+  UpdateAllViews();
+}
 
 bool LinePlotDocument::OnNewDocument() {
   const bool new_doc = wxDocument::OnNewDocument( );
@@ -49,11 +49,11 @@ bool LinePlotDocument::OnNewDocument() {
 }
 
 bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
-  if (!IsModified()) {
+  if (!project_ || !IsModified()) {
     return true;
   }
 
-  project_.SetFilename(filename.ToStdWstring());
+  filename_ = filename.ToStdWstring();
   const bool save = true; //selection_list_.SaveLabFile();
   if (save) {
     Modify(false);
@@ -62,8 +62,9 @@ bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
 }
 
 bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
-  project_ = {};
-  project_.SetFilename(filename.ToStdWstring());
+  project_.reset();
+  project_ = std::make_unique<Project>();
+  filename_ = filename.ToStdWstring();
   const bool read = true; //selection_list_.ReadLabFile();
   if (!read) {
     PLOT_ERROR() << "Error reading the project. File: " << filename;
@@ -75,31 +76,7 @@ bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
 }
 
 bool LinePlotDocument::OnCloseDocument() {
-  /*
-  if (IsModified() && !selection_list_.GetFileName().empty()) {
-    wxString filename = selection_list_.GetFileName();
-    const bool save = selection_list_.SaveLabFile();
-    if (!save) {
-      A2L_ERROR() << "Error saving project. File: " << filename;
-    } else {
-      A2L_INFO() << "Saved the project. File: " << filename;
-    }
-  }
-  selection_list_ = {};
-  if (SelectionGrid* grid = GetSelectionGrid(); grid != nullptr) {
-    grid->SetSelectionList(nullptr);
-  }
-  Modify(false);
 
-  const bool close = wxDocument::OnCloseDocument();
-  // No views to update but the mainframes frame should be updated.
-  if (auto* main_frame = GetMainFrame(); main_frame != nullptr) {
-    if (auto* frame = main_frame->GetFrame(); frame != nullptr) {
-      frame->Update();
-    }
-  }
-  return close;
-  */
   return true;
 }
 

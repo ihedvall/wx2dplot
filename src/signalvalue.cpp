@@ -24,6 +24,10 @@ SignalValue& SignalValue::operator=(const SignalValue& value) {
  return *this;
 }
 
+bool SignalValue::operator<(const SignalValue& value) const {
+  return value_ < value.value_;
+}
+
 void SignalValue::SetValue(double value, double master_value, bool valid) {
  value_ = value;
  master_value_ = master_value;

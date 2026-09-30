@@ -8,6 +8,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
+#include <algorithm>
 
 #include <plot/signalvalue.h>
 #include <plot/signalvaluelist.h>
@@ -21,8 +22,8 @@ public:
   Signal() = default;
   virtual ~Signal() = default;
 
-  Signal(const Signal& signal);
-  Signal& operator = (const Signal& signal);
+  Signal(const Signal& signal) = default;
+  Signal& operator = (const Signal& signal) = default;
 
   bool operator < (const Signal& signal) const {
     return name_ < signal.name_;
@@ -30,6 +31,9 @@ public:
 
   void SetSelected(bool selected) { selected_ = selected; }
   [[nodiscard]] bool IsSelected() const { return selected_; }
+
+  void SetShow(bool show) { show_ = show; }
+  [[nodiscard]] bool IsShown() const { return show_; }
 
   void SetName(std::string name) { name_ = std::move(name); }
   [[nodiscard]] const std::string& GetName() const { return name_; }
@@ -49,10 +53,10 @@ public:
   [[nodiscard]] const std::string& GetMasterUnit() const { return master_unit_; }
 
   void SetMin(double min) { min_ = min; }
-  [[nodiscard]] double GetMin() const { return min_; }
+  [[nodiscard]] double GetMin() const;
 
   void SetMax(double max) { max_ = max; }
-  [[nodiscard]] double GetMax() const { return max_; }
+  [[nodiscard]] double GetMax() const;
 
   void SetEnumList(PlotEnumList enum_list) {
     enum_list_ = std::move(enum_list);
@@ -62,23 +66,23 @@ public:
   }
   [[nodiscard]] std::string GetEnum(int value) const;
 
+  void SetPrecision(int precision) { precision_ = precision; }
+  [[nodiscard]] int GetPrecision() const { return precision_; }
+
+  void SetMasterPrecision(int precision) { master_precision_ = precision; }
+  [[nodiscard]] int GetMasterPrecision() const { return master_precision_; }
+
   [[nodiscard]] bool IsLatestUpdated() const;
-  void SetLatestValue(double value, double master_value, bool valid = true);
-  [[nodiscard]] bool GetLatestValue(double& value, double& master_value) const;
+  void SetLatestValue(const SignalValue& value);
+  [[nodiscard]] SignalValue GetLatestValue() const;
 
+  SignalValueList& SignalValues();
+  const SignalValueList& SignalValues() const;
 
-  void AttachValues(const std::vector<SignalValue>& values);
-  void ResetValues();
-  void AddValue(const SignalValue& value);
-  void PopValue();
-  void CalculateMinMax(bool include_zero);
+ private:
+  bool selected_ = false; ///< Selected means that it shall be used in plot
+  bool show_ = true; ///< Show means that it shall be displayed in plot
 
-  [[nodiscard]]SignalValue GetValueByIndex(size_t index) const;
-  [[nodiscard]] double GetMasterMin() const;
-  [[nodiscard]] double GetMasterMax() const;
-  [[nodiscard]] size_t GetSize() const;
-private:
-  bool selected_ = false;
   std::string name_; ///< This will be used as a signal label.
   std::string description_;
   std::string unit_;
@@ -87,11 +91,10 @@ private:
   std::string master_unit_;;
   double min_ = 0.0; ///< Normally the min range on Y-axis
   double max_ = 0.0;
+  int precision_ = -1; ///< Number of decimal to show
+  int master_precision_ = -1; ///< Number of decimal to show
 
-  mutable std::mutex value_mutex_;
-  SignalValue lrv_;
   SignalValueList value_list_;
-
 
 };
 

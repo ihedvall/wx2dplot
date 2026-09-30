@@ -70,3 +70,6 @@ python/tests/__pycache__/
 
 #CPP CHECK
 *-cppcheck-build-*/
+
+#JUNIE
+.junie/

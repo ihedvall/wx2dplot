@@ -6,6 +6,11 @@
 #include "plot/project.h"
 
 #include <algorithm>
+
+wxDEFINE_EVENT(PROJECT_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(MASTER_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(PLOT_MASTER_CHANGED, wxCommandEvent);
+
 namespace {
 
 struct
@@ -36,6 +41,13 @@ Signal* Project::GetSignal(long index) {
   return &signals_[index];
 }
 
+const Signal* Project::GetSignal(long index) const {
+  if (index < 0 || index >= static_cast<long>(signals_.size())) {
+    return nullptr;
+  }
+  return &signals_[index];
+}
+
 void Project::SortSignals() {
   std::ranges::sort(signals_, SignalLess);
 }
@@ -46,4 +58,25 @@ void Project::DeleteSignal(std::string name) {
   });
 }
 
+void Project::SetMasterReference(double value) {
+  master_value_ = value;
+}
+
+double Project::GetMasterReference() const {
+  return master_value_;
+}
+
+std::string Project::GetMasterName() const {
+  if (const Signal* signal = GetSignal(0); signal != nullptr) {
+    return signal->GetMasterName();
+  }
+  return {};
+}
+
+std::string Project::GetMasterUnit() const {
+  if (const Signal* signal = GetSignal(0); signal != nullptr) {
+    return signal->GetMasterUnit();
+  }
+  return {};
+}
 } // plot

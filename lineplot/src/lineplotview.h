@@ -8,14 +8,14 @@
 namespace plot {
 
 
-class LinePlotFrame;
+class LinePlotWindow;
 class MainFrame;
 class LinePlotDocument;
 class LinePlotView : public wxView  {
 public:
   LinePlotView() = default;
   [[nodiscard]] LinePlotDocument* GetDoc() const;
-  [[nodiscard]] static LinePlotFrame* GetFrame();
+  [[nodiscard]] static LinePlotWindow* GetFrame();
   [[nodiscard]] static MainFrame* GetMainFrame();
 
   bool OnCreate(wxDocument* doc, long flags) override;

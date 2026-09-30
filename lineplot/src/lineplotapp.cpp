@@ -22,6 +22,7 @@
 
 #include "plot/plotlogstream.h"
 
+#include "mpcolourscheme.h"
 #include "mainframe.h"
 #include "lineplotdocument.h"
 #include "lineplotview.h"
@@ -92,13 +93,14 @@ bool LinePlotApp::OnInit() {
   notepad_ = FindNotepad();
 
   int appearance = static_cast<int>(Appearance::System);
+  int graph_color = static_cast<int>(mp_Colour_Scheme::SystemMode);
   wxPoint start_pos(wxDefaultPosition);
   wxSize start_size(wxDefaultSize);
   bool maximized = false;
   if (auto* app_config = wxConfig::Get(); app_config != nullptr) {
     appearance_ = static_cast<Appearance>(app_config->Read(
-              "MainWin/Appearance", appearance));
-
+              "/MainWin/Appearance", appearance));
+    graph_color = app_config->Read("/MainWin/GraphColor", graph_color);
     app_config->Read("/MainWin/X",&start_pos.x, wxDefaultPosition.x);
     app_config->Read("/MainWin/Y",&start_pos.y, wxDefaultPosition.x);
 
@@ -114,6 +116,8 @@ bool LinePlotApp::OnInit() {
   } else if (result == AppearanceResult::CannotChange) {
     PLOT_INFO() << "Cannot change appearance. Appearance: " << appearance;
   }
+
+  mpColourScheme::SetColourScheme(static_cast<mp_Colour_Scheme>(graph_color));
 
   auto* doc_manager = new wxDocManager;
   new wxDocTemplate(doc_manager, "Label File","*.lab;",

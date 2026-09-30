@@ -4,30 +4,45 @@
  */
 
 #include "plot/alphanumericdisplay.h"
+#include "plot/project.h"
 
 #include <set>
 namespace plot {
 
 wxBEGIN_EVENT_TABLE(AlphaNumericDisplay, wxListView)
-
 wxEND_EVENT_TABLE()
+
 AlphaNumericDisplay::AlphaNumericDisplay(wxWindow *parent, wxWindowID id)
   : wxListView(parent, id, wxDefaultPosition, wxDefaultSize,
     wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_VIRTUAL) {
   wxListCtrl::EnableCheckBoxes(true);
-  InsertColumn(0, "Plot", wxLIST_FORMAT_LEFT, 50);
+  wxListCtrl::SetMinSize({100, -1});
+  InsertColumn(0, "Use", wxLIST_FORMAT_LEFT, 50);
   InsertColumn(1, "Name",wxLIST_FORMAT_LEFT, 200);
-  InsertColumn(2, "Value",wxLIST_FORMAT_LEFT, 100);
-  InsertColumn(3, "Change",wxLIST_FORMAT_LEFT, 50);
-  InsertColumn(4, "Unit",wxLIST_FORMAT_LEFT, 75);
-  InsertColumn(5, "Color",wxLIST_FORMAT_LEFT, 75);
-  InsertColumn(6, "Description",wxLIST_FORMAT_LEFT, 300);
+  InsertColumn(2, "Value",wxLIST_FORMAT_RIGHT, 100);
+  InsertColumn(3, "Unit",wxLIST_FORMAT_LEFT, 75);
+  InsertColumn(4, "Description",wxLIST_FORMAT_LEFT, 300);
+
+  Bind(wxEVT_LIST_ITEM_CHECKED, &AlphaNumericDisplay::OnItemChecked,
+    this);
+  Bind(wxEVT_LIST_ITEM_UNCHECKED, &AlphaNumericDisplay::OnItemUnchecked,
+    this);
 }
 
 void AlphaNumericDisplay::SetProject(Project *project) {
+  const auto* old_project = project_;
   project_ = project;
-  Redraw();
-  Update();
+  if (project_ != nullptr && old_project != project_) {
+    project_->Bind(PROJECT_CHANGED, &AlphaNumericDisplay::OnProjectChanged,
+      this);
+    project_->Bind(MASTER_CHANGED, &AlphaNumericDisplay::OnMasterChanged,
+      this);
+    project_->Bind(PLOT_MASTER_CHANGED, &AlphaNumericDisplay::OnMasterChanged,
+      this);
+  }
+  if (project_ == nullptr) {
+    Redraw();
+  }
 }
 
 void AlphaNumericDisplay::Redraw() {
@@ -64,6 +79,16 @@ void AlphaNumericDisplay::Redraw() {
   }
 
 }
+bool AlphaNumericDisplay::OnGetItemIsChecked(long item) const {
+  if (project_ == nullptr || item < 0) {
+    return false;
+  }
+  const Signal* signal = project_->GetSignal(item);
+  if (signal == nullptr) {
+    return false;
+  }
+  return signal->IsSelected();
+}
 
 wxString AlphaNumericDisplay::OnGetItemText(long item, long column) const {
   wxString text;
@@ -85,35 +110,29 @@ wxString AlphaNumericDisplay::OnGetItemText(long item, long column) const {
 
   case 2: {
     // Value
-    double value = 0.0;
-    double master = 0.0;
-    const bool valid = signal->GetLatestValue(value, master);
-    if (!valid) {
+    const int precision = signal->GetPrecision();
+    const double x_value = project_->GetMasterReference();
+    const SignalValue value = signal->SignalValues().GetValueByMaster(x_value);
+    if (!value.IsValid()) {
       text = "*";
       break;
     }
 
     if (const auto& enum_list = signal->GetEnumList();
         !enum_list.empty()) {
-      const std::string enum_value = signal->GetEnum(static_cast<int>(value));
+      const std::string enum_value = signal->GetEnum(
+        static_cast<int>(value.GetValue()));
       text = wxString::FromUTF8(enum_value);
-        } else {
-          text = wxString::FromDouble(value);
-        }
+    } else {
+      text = wxString::FromDouble(value.GetValue(), precision);
+    }
     break;
   }
-
-  case 3: // Change
-    break;
-
-  case 4:  //
+  case 3:  //
     text = wxString::FromUTF8(signal->GetUnit());
     break;
 
-  case 5: // Colour
-    break;
-
-  case 6:  // Description
+  case 4:  // Description
     text = wxString::FromUTF8(signal->GetDescription());
     break;
 
@@ -121,6 +140,53 @@ wxString AlphaNumericDisplay::OnGetItemText(long item, long column) const {
     break;
   }
   return text;
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
+void AlphaNumericDisplay::OnItemChecked(wxListEvent& event) {
+  if (project_ == nullptr) {
+    return;
+  }
+  const long item = event.GetIndex();
+  if (Signal* signal = project_->GetSignal(item); signal != nullptr) {
+    signal->SetSelected(true);
+  }
+  wxCommandEvent changed(PROJECT_CHANGED);
+  project_->ProcessEventLocally(changed);
+
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
+void AlphaNumericDisplay::OnItemUnchecked(wxListEvent& event) {
+  if (project_ == nullptr) {
+    return;
+  }
+  const long item = event.GetIndex();
+  if (Signal* signal = project_->GetSignal(item); signal != nullptr) {
+    signal->SetSelected(false);
+  }
+  wxCommandEvent event1(PROJECT_CHANGED);
+  project_->ProcessEventLocally(event1);
+}
+
+void AlphaNumericDisplay::OnProjectChanged(wxCommandEvent& event) {
+  Redraw();
+  event.Skip();
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void AlphaNumericDisplay::OnMasterChanged(wxCommandEvent& event) {
+  event.Skip();
+  if (project_ == nullptr) {
+    return;
+  }
+  // Update all value deoendent on the X-value.
+  // Set default value to false.
+  RefreshItems(0,
+    static_cast<long>(GetItemCount() - 1));
+
 }
 
 } // plot

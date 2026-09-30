@@ -5,16 +5,17 @@
 #include "lineplotview.h"
 
 #include <wx/docview.h>
+#include <wx/event.h>
 
 #include <filesystem>
 #include <sstream>
 
-#include "plot/plotlogstream.h"
-
-#include "mainframe.h"
-#include "lineplotdocument.h"
-#include "lineplotframe.h"
+#include "../../include/plot/lineplotwindow.h"
 #include "lineplotapp.h"
+#include "lineplotdocument.h"
+#include "mainframe.h"
+#include "plot/plotlogstream.h"
+#include "plot/project.h"
 
 using namespace std::filesystem;
 
@@ -28,7 +29,7 @@ wxEND_EVENT_TABLE()
 LinePlotDocument *LinePlotView::GetDoc() const {
   return dynamic_cast<LinePlotDocument*>(wxView::GetDocument());
 }
-LinePlotFrame* LinePlotView::GetFrame() {
+LinePlotWindow* LinePlotView::GetFrame() {
   if (auto* parent = GetMainFrame(); parent != nullptr ) {
     return parent->GetFrame();
   }
@@ -48,9 +49,10 @@ bool LinePlotView::OnCreate(wxDocument *doc, long flags) {
   if (!wxView::OnCreate( doc,flags)) {
     return false;
   }
-
+  auto* plot_doc = GetDoc();
+  auto* project = plot_doc != nullptr ? plot_doc->GetProject() : nullptr;
   if (auto* frame = GetFrame(); frame != nullptr) {
-    frame->SetView(this);
+    frame->SetProject(project);
   }
   UpdateTitle();
   return true;
@@ -63,14 +65,17 @@ bool LinePlotView::OnClose(bool del) {
   Activate(false);
 
   auto& app = wxGetApp();
-  if (auto* parent = dynamic_cast<MainFrame*>(app.GetTopWindow());
-      parent != nullptr ) {
-    if (auto* frame = parent->GetFrame(); frame != nullptr) {
-      frame->ClearBackground();
-      frame->SetView(nullptr);
-    }
-    parent->SetTitle(app.GetAppDisplayName());
+  auto* frame = GetFrame();
+  auto* main_frame = GetMainFrame();
+
+  if (frame != nullptr) {
+    frame->ClearBackground();
+    frame->SetProject(nullptr);
   }
+  if (main_frame != nullptr) {
+    main_frame->SetTitle(app.GetAppDisplayName());
+  }
+
   SetFrame(nullptr);
   return true;
 }
@@ -78,9 +83,16 @@ bool LinePlotView::OnClose(bool del) {
 void LinePlotView::OnUpdate(wxView* sender, wxObject* hint) {
   wxView::OnUpdate(sender, hint);
   UpdateTitle();
+  auto* doc = GetDoc();
+  auto* project = doc != nullptr ? doc->GetProject() : nullptr;
   if (auto* frame = GetFrame(); frame != nullptr) {
-    frame->Redraw();
-    frame->Update();
+    frame->SetProject(project);
+    if (project != nullptr) {
+      wxCommandEvent event(PROJECT_CHANGED);
+      project->ProcessEventLocally(event);
+    }
+    //frame->Redraw();
+    //frame->Update();
   }
 }
 
