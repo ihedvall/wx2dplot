@@ -7,8 +7,8 @@
 #include <string>
 #include <map>
 #include <mutex>
-#include <vector>
 #include <algorithm>
+#include <optional>
 
 #include <plot/signalvalue.h>
 #include <plot/signalvaluelist.h>
@@ -58,6 +58,12 @@ public:
   void SetMax(double max) { max_ = max; }
   [[nodiscard]] double GetMax() const;
 
+  void SetHighWarning(double warning) {
+    warning_ = warning;
+  }
+  [[nodiscard]] const std::optional<double>& GetHighWarning() const {
+    return warning_;
+  }
   void SetEnumList(PlotEnumList enum_list) {
     enum_list_ = std::move(enum_list);
   }
@@ -91,8 +97,9 @@ public:
   std::string master_unit_;;
   double min_ = 0.0; ///< Normally the min range on Y-axis
   double max_ = 0.0;
-  int precision_ = -1; ///< Number of decimal to show
-  int master_precision_ = -1; ///< Number of decimal to show
+  std::optional<double> warning_ = 0.0; ///< (High) warning limit
+  int precision_ = -1; ///< Number of decimals to show
+  int master_precision_ = -1; ///< Number of decimals to show
 
   SignalValueList value_list_;
 

@@ -25,8 +25,9 @@ private:
   boost::asio::io_context ctx_;
   std::string notepad_; ///< Path to notepad.exe if it exist
   Appearance appearance_ = Appearance::System;
-  std::wstring label_file_;
-  std::wstring a2l_file_;
+
+  std::wstring config_file_; ///< Configuration file name from CLI
+  std::wstring data_file_;   ///< Data file name from CLI
 
   void OnOpenLogFile(wxCommandEvent& event);
   void OnUpdateOpenLogFile(wxUpdateUIEvent& event);

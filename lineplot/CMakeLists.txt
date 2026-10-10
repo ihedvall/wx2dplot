@@ -13,10 +13,13 @@ include (../script/boost.cmake)
 
 add_executable(lineplot
         src/windowid.h
+        src/lineplot.rc
         src/lineplotapp.h src/lineplotapp.cpp
         src/mainframe.cpp src/mainframe.h
         src/lineplotdocument.cpp src/lineplotdocument.h
-        src/lineplotview.cpp src/lineplotview.h)
+        src/lineplotview.cpp src/lineplotview.h
+        src/configwindow.cpp src/configwindow.h
+)
 
 #target_include_directories(lineplot PRIVATE ${wxmathplot_SOURCE_DIR})
 
@@ -33,4 +36,4 @@ target_link_libraries(lineplot PRIVATE Boost::headers Boost::system Boost::proce
 target_link_libraries(lineplot PRIVATE wx2dplot)
 target_link_libraries(lineplot PRIVATE util)
 target_link_libraries(lineplot PRIVATE wxmathplot_static)
-target_link_libraries(lineplot PRIVATE ${wxWidgets_LIBRARIES})
+target_link_libraries(lineplot PRIVATE wxWidgets::wxWidgets)

@@ -50,10 +50,16 @@ bool LinePlotView::OnCreate(wxDocument *doc, long flags) {
     return false;
   }
   auto* plot_doc = GetDoc();
-  auto* project = plot_doc != nullptr ? plot_doc->GetProject() : nullptr;
+  if (plot_doc == nullptr) {
+    return false;
+  }
+  const auto& config = plot_doc->GetConfig();
+
+  /*
   if (auto* frame = GetFrame(); frame != nullptr) {
     frame->SetProject(project);
   }
+  */
   UpdateTitle();
   return true;
 }
@@ -70,7 +76,7 @@ bool LinePlotView::OnClose(bool del) {
 
   if (frame != nullptr) {
     frame->ClearBackground();
-    frame->SetProject(nullptr);
+    // frame->SetProject(nullptr);
   }
   if (main_frame != nullptr) {
     main_frame->SetTitle(app.GetAppDisplayName());
@@ -84,6 +90,7 @@ void LinePlotView::OnUpdate(wxView* sender, wxObject* hint) {
   wxView::OnUpdate(sender, hint);
   UpdateTitle();
   auto* doc = GetDoc();
+  /*
   auto* project = doc != nullptr ? doc->GetProject() : nullptr;
   if (auto* frame = GetFrame(); frame != nullptr) {
     frame->SetProject(project);
@@ -94,6 +101,7 @@ void LinePlotView::OnUpdate(wxView* sender, wxObject* hint) {
     //frame->Redraw();
     //frame->Update();
   }
+  */
 }
 
 void LinePlotView::UpdateTitle() const {

@@ -9,7 +9,7 @@
 #include <wx/docview.h>
 #include <wx/wx.h>
 
-#include "plot/project.h"
+#include "plot/configuration.h"
 
 namespace plot {
 
@@ -21,11 +21,11 @@ public:
 
   [[nodiscard]] static MainFrame* GetMainFrame();
 
-  void SetProject(std::unique_ptr<Project> project);
-  [[nodiscard]] Project* GetProject() const { return project_.get(); }
-
   bool OnNewDocument() override;
   bool OnCloseDocument() override;
+
+  [[nodiscard]] Configuration& GetConfig() { return config_; }
+  [[nodiscard]] const Configuration& GetConfig() const { return config_; }
 
 protected:
 
@@ -33,8 +33,7 @@ protected:
   bool DoSaveDocument(const wxString& filename) override;
 
 private:
-  std::wstring filename_;
-  std::unique_ptr<Project> project_;
+  Configuration config_;
 
   wxDECLARE_DYNAMIC_CLASS(LinePlotDocument);
   wxDECLARE_EVENT_TABLE();

@@ -11,6 +11,7 @@ wxDEFINE_EVENT(PROJECT_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(MASTER_CHANGED, wxCommandEvent);
 wxDEFINE_EVENT(PLOT_MASTER_CHANGED, wxCommandEvent);
 
+
 namespace {
 
 struct
@@ -23,6 +24,44 @@ struct
 }
 
 namespace plot {
+
+Project::Project(const Project& project)
+  : wxEvtHandler(),
+    name_(project.name_),
+    description_(project.description_),
+    signals_(project.signals_),
+    utc_base_time_(project.utc_base_time_),
+    master_value_(0.0),
+    include_zero_x_(project.include_zero_x_),
+    include_zero_y_(project.include_zero_y_) {
+}
+
+
+Project::Project(Project&& project)
+ noexcept   : wxEvtHandler(),
+    name_( std::move(project.name_)),
+    description_( std::move(project.description_)),
+    signals_(std::move(project.signals_)),
+    utc_base_time_(project.utc_base_time_),
+    master_value_(0.0),
+    include_zero_x_(project.include_zero_x_),
+    include_zero_y_(project.include_zero_y_) {
+}
+
+Project& Project::operator = (const Project& project) {
+  if (this == &project) {
+    return *this;
+  }
+  name_ = project.name_;
+  description_ = project.description_;
+  signals_ = project.signals_;
+  utc_base_time_ = project.utc_base_time_;
+  master_value_ = 0.0,
+  include_zero_x_ = project.include_zero_x_;
+  include_zero_y_ = project.include_zero_y_;
+  return *this;
+}
+
 
 long Project::GetSignal(const std::string &name) const {
   for (size_t index = 0; index < signals_.size(); ++index) {

@@ -3,7 +3,7 @@
 include(CMakePrintHelpers)
 
 if (NOT wxWidgets_FOUND )
-    find_package(wxWidgets COMPONENTS adv core base)
+    find_package(wxWidgets COMPONENTS core base adv xml)
 endif()
 
 
@@ -27,7 +27,7 @@ if (NOT wxWidgets_FOUND)
         endif()
         set(wxWidgets_USE_UNIVERSAL OFF)
     endif()
-    find_package(wxWidgets COMPONENTS adv core base)
+    find_package(wxWidgets COMPONENTS core base adv xml)
 
 endif()
 

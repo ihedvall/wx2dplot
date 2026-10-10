@@ -120,8 +120,8 @@ bool LinePlotApp::OnInit() {
   mpColourScheme::SetColourScheme(static_cast<mp_Colour_Scheme>(graph_color));
 
   auto* doc_manager = new wxDocManager;
-  new wxDocTemplate(doc_manager, "Label File","*.lab;",
-          "",  "lab",
+  new wxDocTemplate(doc_manager, "Configuration File","*.xml;",
+          "",  "xml",
    "Label Document","Line Plot View",
                      wxCLASSINFO(LinePlotDocument),
                      wxCLASSINFO(LinePlotView));
@@ -133,21 +133,30 @@ bool LinePlotApp::OnInit() {
   main_frame->Show(true);
 
 
-  if (!label_file_.empty()) {
-    doc_manager->CreateDocument(label_file_);
+  if (!config_file_.empty()) {
+    doc_manager->CreateDocument(config_file_);
   }
-  if (LinePlotDocument* doc = MainFrame::GetDocument();
-    doc != nullptr && !a2l_file_.empty()) {
-    // doc->AttachA2lFile(a2l_file_);
+  LinePlotDocument* doc = MainFrame::GetDocument();
+  if (doc == nullptr && !data_file_.empty()) {
+    doc_manager->CreateNewDocument();
+    if (doc = MainFrame::GetDocument(); doc != nullptr) {
+      doc->GetConfig().AddDataFile(data_file_);
+    }
+  } else if (doc == nullptr) {
+    doc_manager->CreateNewDocument();
+  } else if (doc != nullptr && !data_file_.empty()) {
+    doc->GetConfig().AddDataFile(data_file_);
     doc->UpdateAllViews();
   }
-
+  if (doc = MainFrame::GetDocument(); doc != nullptr) {
+    main_frame->Redraw();
+    doc->UpdateAllViews();
+  }
   return true;
 }
 
 int LinePlotApp::OnExit() {
   LOG_INFO() << "Closing app";
-
 
   auto* app_config = wxConfig::Get();
   if (auto* doc_manager = wxDocManager::GetDocumentManager();
@@ -220,10 +229,10 @@ bool LinePlotApp::OnCmdLineParsed(wxCmdLineParser& parser) {
         continue;
       }
       const std::string extension = fullname.extension().string();
-      if (iequals(extension ,".lab")) {
-        label_file_ = inputFile.ToStdWstring();
-      } else if (iequals(extension ,".a2l")) {
-        a2l_file_ = inputFile.ToStdWstring();
+      if (iequals(extension ,".xml")) {
+        config_file_ = inputFile.ToStdWstring();
+      } else if (iequals(extension ,".mf4")) {
+        data_file_ = inputFile.ToStdWstring();
       }
     }
     catch (const std::exception& err) {

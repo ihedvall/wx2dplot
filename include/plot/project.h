@@ -21,6 +21,10 @@ class Project : public wxEvtHandler {
 public:
   Project() = default;
  ~Project() override = default;
+  Project(const Project& project);
+  Project(Project&& project) noexcept;
+
+  Project& operator=(const Project& project);
 
   [[nodiscard]] bool IsEmpty() const { return signals_.empty(); }
 

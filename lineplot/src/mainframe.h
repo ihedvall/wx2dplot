@@ -7,11 +7,16 @@
 #include <wx/wx.h>
 #include <wx/docview.h>
 #include <wx/timer.h>
+#include <wx/splitter.h>
+
+#include "configwindow.h"
+#include "plot/lineplotwindow.h"
 
 namespace plot {
 
 class LinePlotDocument;
 class LinePlotWindow;
+
 class MainFrame : public wxDocParentFrame {
  public:
   MainFrame(wxDocManager* doc_manager,
@@ -22,10 +27,13 @@ class MainFrame : public wxDocParentFrame {
 
   [[nodiscard]] LinePlotWindow* GetFrame() const;
   [[nodiscard]] static LinePlotDocument* GetDocument();
+  void Redraw();
   void SetTitle(const wxString& title) override;
  private:
-
+  ConfigWindow* config_window_ = nullptr;
   LinePlotWindow* frame_ = nullptr;
+  wxSplitterWindow* splitter_ = nullptr;
+
   wxMenuBar* menu_bar_ = nullptr;
   wxStatusBar* status_bar_ = nullptr;
   wxTimer* timer_ = nullptr;

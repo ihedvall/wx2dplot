@@ -28,6 +28,9 @@
 #include "plot/sinusproject.h"
 #include "windowid.h"
 
+// ReSharper disable once CppUnusedIncludeDirective
+#include "img/appicon.xpm"
+
 using namespace util;
 using namespace util::log;
 using namespace util::time;
@@ -56,18 +59,16 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
     : wxDocParentFrame(doc_manager, nullptr, kIdMainFrame, title, start_pos,
                        start_size) {
   wxDocParentFrame::SetMinSize({-1, 600});
-#ifdef _WIN32
-  wxIcon app_icon("APP_ICON", wxBITMAP_TYPE_ICO_RESOURCE);
-#else
-  wxIcon app{wxICON(app_icon)};
-#endif
+  wxIcon app_icon(wxICON(appicon));
   SetIcon(app_icon);
+
   wxWindow::SetName("SelectionListTop");
 #if (_MSC_VER)
   wxTopLevelWindowMSW::Maximize(maximized);
 #else
   wxTopLevelWindowNative::Maximize(maximized);
 #endif
+
 #if (WIN32)
   wxWindow::DragAcceptFiles(true);
 #endif
@@ -189,8 +190,11 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
     status_bar_->SetStatusText("", 0);
     status_bar_->SetStatusText("Time", 1);
   }
+  splitter_ = new wxSplitterWindow(this, wxID_ANY);
+  config_window_ = new ConfigWindow(splitter_, wxID_ANY);
+  frame_ = new LinePlotWindow(splitter_);
+  splitter_->SplitVertically(config_window_, frame_, 200);
 
-  frame_ = new LinePlotWindow(this);
   timer_ = new wxTimer(this, kIdMainFrameTimer);
   timer_->Start(500);
 }
@@ -209,14 +213,30 @@ LinePlotDocument* MainFrame::GetDocument() {
   return nullptr;
 }
 
+void MainFrame::Redraw() {
+  if (config_window_ != nullptr) {
+    config_window_->Redraw();
+  }
+
+  auto* doc = GetDocument();
+  if (doc == nullptr) {
+    return;
+  }
+  auto& config = doc->GetConfig();
+  if (auto& layers = config.GetLayers();
+    !layers.empty() && frame_ != nullptr) {
+    frame_->SetProject(&layers[0]);
+    frame_->Redraw();
+  }
+}
+
 void MainFrame::SetTitle(const wxString& title) {
   std::wstringstream temp;
   const auto& app = wxGetApp();
   temp << app.GetAppName();
   const auto* doc = GetDocument();
-  const Project* project = doc != nullptr ? doc->GetProject() : nullptr;
-  if (project != nullptr && !project->GetName().empty()) {
-    temp << " - " << wxString::FromUTF8(project->GetName());
+  if (doc != nullptr && !doc->GetConfig().GetName().empty()) {
+    temp << " - " << wxString::FromUTF8(doc->GetConfig().GetName());
   }
   if (doc != nullptr && !doc->GetFilename().empty()) {
     temp << " - " << doc->GetUserReadableName();
@@ -364,8 +384,6 @@ void MainFrame::OnGraphColor(wxCommandEvent& event) {
   }
 }
 
-
-
 void MainFrame::OnDropFiles(wxDropFilesEvent& event) { // NOLINT(*-convert-member-functions-to-static)
   const int file_count = event.GetNumberOfFiles();
   const wxString* file_list = event.GetFiles();
@@ -399,24 +417,16 @@ void MainFrame::OnDropFiles(wxDropFilesEvent& event) { // NOLINT(*-convert-membe
 
 void MainFrame::OnSinusProject(wxCommandEvent& event) { // NOLINT(*-convert-member-functions-to-static)
   auto* doc = GetDocument();
-  Project* project = doc != nullptr ? doc->GetProject() : nullptr;
-  if (project != nullptr) {
-    PLOT_ERROR() << "Project is not empty. Cannot add a demo project.";
-    return;
-  }
   auto* doc_manager = wxDocManager::GetDocumentManager();
   if (doc_manager == nullptr) {
     return;
   }
-  const bool close = doc_manager->CloseDocuments();
-  if (!close) {
-    PLOT_ERROR() << "Cannot close documents.";
-    return;
-  }
-  wxDocument* new_doc = doc_manager->CreateNewDocument();
-  if (new_doc == nullptr) {
-    PLOT_ERROR() << "Cannot create a new document.";
-    return;
+  if (doc == nullptr) {
+    if (wxDocument* new_doc = doc_manager->CreateNewDocument();
+        new_doc == nullptr) {
+      PLOT_ERROR() << "Cannot create a new document.";
+      return;
+    }
   }
   doc = GetDocument();
   if (doc == nullptr) {
@@ -424,16 +434,24 @@ void MainFrame::OnSinusProject(wxCommandEvent& event) { // NOLINT(*-convert-memb
     return;
   }
 
-  auto sinus_project = std::make_unique<SinusProject>();
-  doc->SetProject(std::move(sinus_project));
-  doc->Modify(false);
+  // Add a new layout
+  auto& config = doc->GetConfig();
 
+  Layer sinus(SinusProject(), LayoutType::kLinePlotLayout);
+  config.AddLayer(sinus);
+  Redraw();
+  doc->Modify(false);
 }
 
 void MainFrame::OnUpdateEmptyProject(wxUpdateUIEvent& event) { // NOLINT(*-convert-member-functions-to-static)
   auto* doc = GetDocument();
-  const Project* project = doc != nullptr ? doc->GetProject() : nullptr;
-  event.Enable(project == nullptr);
+  if (doc == nullptr) {
+    event.Enable(true);
+    return;
+  }
+  const auto& config = doc->GetConfig();
+  const LayerList& layers = config.GetLayers();
+  event.Enable(layers.empty());
 }
 
 void MainFrame::OnUpdateNoDocument(wxUpdateUIEvent& event) { // NOLINT(*-convert-member-functions-to-static)

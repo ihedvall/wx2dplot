@@ -1,0 +1,6 @@
+#include <wx/msw/wx.rc>
+
+appicon   ICON    "img/appicon.ico"
+config    RCDATA  "img/config.png"
+layers    RCDATA  "img/layers.png"
+lineplot  RCDATA  "img/lineplot.png"

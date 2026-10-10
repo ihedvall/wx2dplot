@@ -14,7 +14,7 @@
 #include <filesystem>
 #include <thread>
 
-#include "../../include/plot/lineplotwindow.h"
+#include "plot/lineplotwindow.h"
 #include "lineplotapp.h"
 #include "mainframe.h"
 #include "windowid.h"
@@ -33,11 +33,6 @@ MainFrame* LinePlotDocument::GetMainFrame() {
   return dynamic_cast<MainFrame*>(wxGetApp().GetTopWindow());
 }
 
-void LinePlotDocument::SetProject(std::unique_ptr<Project> project) {
-  project_ = std::move(project);
-  UpdateAllViews();
-}
-
 bool LinePlotDocument::OnNewDocument() {
   const bool new_doc = wxDocument::OnNewDocument( );
   if (!new_doc) {
@@ -49,12 +44,12 @@ bool LinePlotDocument::OnNewDocument() {
 }
 
 bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
-  if (!project_ || !IsModified()) {
+  if (!IsModified()) {
     return true;
   }
 
-  filename_ = filename.ToStdWstring();
-  const bool save = true; //selection_list_.SaveLabFile();
+  config_.SetFilename(filename.ToStdWstring());
+  const bool save = config_.SaveXmlFile();
   if (save) {
     Modify(false);
   }
@@ -62,10 +57,9 @@ bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
 }
 
 bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
-  project_.reset();
-  project_ = std::make_unique<Project>();
-  filename_ = filename.ToStdWstring();
-  const bool read = true; //selection_list_.ReadLabFile();
+  config_.Reset();
+  config_.SetFilename(filename.ToStdWstring());
+  const bool read = config_.ReadXmlFile();
   if (!read) {
     PLOT_ERROR() << "Error reading the project. File: " << filename;
   } else {

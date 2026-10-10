@@ -43,8 +43,14 @@ add_library(wx2dplot
         src/yaxis.cpp include/plot/yaxis.h
         src/masterplotdisplay.cpp
         include/plot/masterplotdisplay.h
-        lineplot/src/projectdisplay.cpp
-        include/plot/projectdisplay.h)
+        src/projectdisplay.cpp
+        include/plot/projectdisplay.h
+        src/configuration.cpp
+        include/plot/configuration.h
+        src/layer.cpp
+        include/plot/layer.h
+        src/display.cpp
+        include/plot/display.h)
 
 target_include_directories(wx2dplot PUBLIC
         $<INSTALL_INTERFACE:include>
