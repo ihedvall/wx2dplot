@@ -60,6 +60,7 @@ public:
   [[nodiscard]] const Signal* GetSignal(long index) const;
   void SortSignals();
   void DeleteSignal( std::string name);
+  void ClearSignals() { signals_.clear(); }
 
   void SetMasterReference(double value);
   [[nodiscard]] double GetMasterReference() const;

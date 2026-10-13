@@ -25,7 +25,7 @@ void YAxisList::Init(const Project& project) {
   // Calculate the selected signals
   signal_list_.clear();
   for (const auto& signal : signals) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
     auto& values = signal.SignalValues();

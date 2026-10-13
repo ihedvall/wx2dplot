@@ -87,7 +87,7 @@ bool AlphaNumericDisplay::OnGetItemIsChecked(long item) const {
   if (signal == nullptr) {
     return false;
   }
-  return signal->IsSelected();
+  return signal->IsActive();
 }
 
 wxString AlphaNumericDisplay::OnGetItemText(long item, long column) const {
@@ -150,7 +150,7 @@ void AlphaNumericDisplay::OnItemChecked(wxListEvent& event) {
   }
   const long item = event.GetIndex();
   if (Signal* signal = project_->GetSignal(item); signal != nullptr) {
-    signal->SetSelected(true);
+    signal->SetActive(true);
   }
   wxCommandEvent changed(PROJECT_CHANGED);
   project_->ProcessEventLocally(changed);
@@ -165,7 +165,7 @@ void AlphaNumericDisplay::OnItemUnchecked(wxListEvent& event) {
   }
   const long item = event.GetIndex();
   if (Signal* signal = project_->GetSignal(item); signal != nullptr) {
-    signal->SetSelected(false);
+    signal->SetActive(false);
   }
   wxCommandEvent event1(PROJECT_CHANGED);
   project_->ProcessEventLocally(event1);

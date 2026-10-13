@@ -120,11 +120,9 @@ bool LinePlotApp::OnInit() {
   mpColourScheme::SetColourScheme(static_cast<mp_Colour_Scheme>(graph_color));
 
   auto* doc_manager = new wxDocManager;
-  new wxDocTemplate(doc_manager, "Configuration File","*.xml;",
-          "",  "xml",
-   "Label Document","Line Plot View",
-                     wxCLASSINFO(LinePlotDocument),
-                     wxCLASSINFO(LinePlotView));
+  new wxDocTemplate(doc_manager, "Configuration Files","*.mdx;*.xml",
+     "",  "mdx","ConfigDocument","Line Plot View",
+     wxCLASSINFO(LinePlotDocument), wxCLASSINFO(LinePlotView));
   doc_manager->SetMaxDocsOpen(1);
 
   auto* main_frame = new MainFrame(doc_manager, GetAppDisplayName(), start_pos,

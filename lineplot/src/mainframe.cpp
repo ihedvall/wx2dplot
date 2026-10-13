@@ -230,16 +230,27 @@ void MainFrame::Redraw() {
   }
 }
 
-void MainFrame::SetTitle(const wxString& title) {
+void MainFrame::SetTitle(const wxString&) {
   std::wstringstream temp;
   const auto& app = wxGetApp();
   temp << app.GetAppName();
+
   const auto* doc = GetDocument();
   if (doc != nullptr && !doc->GetConfig().GetName().empty()) {
     temp << " - " << wxString::FromUTF8(doc->GetConfig().GetName());
   }
+
   if (doc != nullptr && !doc->GetFilename().empty()) {
-    temp << " - " << doc->GetUserReadableName();
+    const auto& config = doc->GetConfig();
+    std::wstring stem;
+    try {
+      const path fullname(config.GetFilename());
+      stem = fullname.stem().wstring();
+    }
+    catch (const std::exception& err) {
+      PLOT_ERROR() << "Fila path error. Error: " << err.what();
+    }
+    temp << " - " << stem;
   }
   wxDocParentFrame::SetTitle(temp.str());
 }
@@ -438,6 +449,12 @@ void MainFrame::OnSinusProject(wxCommandEvent& event) { // NOLINT(*-convert-memb
   auto& config = doc->GetConfig();
 
   Layer sinus(SinusProject(), LayoutType::kLinePlotLayout);
+  if (config.GetName().empty()) {
+    config.SetName(sinus.GetName());
+  }
+  if (config.GetDescription().empty()) {
+    config.SetDescription(sinus.GetDescription());
+  }
   config.AddLayer(sinus);
   Redraw();
   doc->Modify(false);

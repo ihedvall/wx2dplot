@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <optional>
 
+#include <wx/xml/xml.h>
+
 #include <plot/signalvalue.h>
 #include <plot/signalvaluelist.h>
 
@@ -26,14 +28,16 @@ public:
   Signal& operator = (const Signal& signal) = default;
 
   bool operator < (const Signal& signal) const {
-    return name_ < signal.name_;
+    if (name_ < signal.name_) return true;
+    if (name_ > signal.name_) return false;
+    return source_ < signal.source_;
   }
 
   void SetSelected(bool selected) { selected_ = selected; }
   [[nodiscard]] bool IsSelected() const { return selected_; }
 
-  void SetShow(bool show) { show_ = show; }
-  [[nodiscard]] bool IsShown() const { return show_; }
+  void SetActive(bool active) { active_ = active; }
+  [[nodiscard]] bool IsActive() const { return active_; }
 
   void SetName(std::string name) { name_ = std::move(name); }
   [[nodiscard]] const std::string& GetName() const { return name_; }
@@ -45,6 +49,9 @@ public:
 
   void SetUnit(std::string unit) { unit_ = std::move(unit); }
   [[nodiscard]] const std::string& GetUnit() const { return unit_; }
+
+  void SetSource(std::string source) { source_ = std::move(source); }
+  [[nodiscard]] const std::string& GetSource() const { return source_; }
 
   void SetMasterName(std::string name) { master_name_ = std::move(name); }
   [[nodiscard]] const std::string& GetMasterName() const { return master_name_; }
@@ -78,6 +85,9 @@ public:
   void SetMasterPrecision(int precision) { master_precision_ = precision; }
   [[nodiscard]] int GetMasterPrecision() const { return master_precision_; }
 
+  void SetUserObject(void* user_object) { user_object_ = user_object; }
+  [[nodiscard]] void* GetUserObject() const { return user_object_; }
+
   [[nodiscard]] bool IsLatestUpdated() const;
   void SetLatestValue(const SignalValue& value);
   [[nodiscard]] SignalValue GetLatestValue() const;
@@ -85,13 +95,17 @@ public:
   SignalValueList& SignalValues();
   const SignalValueList& SignalValues() const;
 
+  void ReadXml(const wxXmlNode& root);
+  void SaveXml(wxXmlNode* root) const;
+
  private:
-  bool selected_ = false; ///< Selected means that it shall be used in plot
-  bool show_ = true; ///< Show means that it shall be displayed in plot
+  bool selected_ = false; ///< Selected means that it can be used in the display
+  bool active_ = true; ///< Show means that it shall be displayed
 
   std::string name_; ///< This will be used as a signal label.
   std::string description_;
   std::string unit_;
+  std::string source_; ///< Source or device description
   PlotEnumList enum_list_;
   std::string master_name_ = "Sample"; ///< X-axis
   std::string master_unit_;;
@@ -100,6 +114,7 @@ public:
   std::optional<double> warning_ = 0.0; ///< (High) warning limit
   int precision_ = -1; ///< Number of decimals to show
   int master_precision_ = -1; ///< Number of decimals to show
+  void* user_object_ = nullptr;
 
   SignalValueList value_list_;
 

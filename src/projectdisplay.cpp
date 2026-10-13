@@ -96,7 +96,14 @@ void ProjectDisplay::Redraw() {
     desc_ctrl_->ChangeValue(wxString::FromUTF8(project_->GetDescription()));
 
     x_zero_ctrl_->Enable(true);
+    if (x_zero_ctrl_->GetValue() != project_->GetIncludeZeroX()) {
+      x_zero_ctrl_->SetValue(project_->GetIncludeZeroX());
+    }
+
     y_zero_ctrl_->Enable(true);
+    if (y_zero_ctrl_->GetValue() != project_->GetIncludeZeroY()) {
+      y_zero_ctrl_->SetValue(project_->GetIncludeZeroY());
+    }
   }
   Refresh();
 }

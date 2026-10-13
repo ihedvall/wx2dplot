@@ -44,14 +44,14 @@ bool LinePlotDocument::OnNewDocument() {
 }
 
 bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
-  if (!IsModified()) {
-    return true;
-  }
-
   config_.SetFilename(filename.ToStdWstring());
   const bool save = config_.SaveXmlFile();
   if (save) {
     Modify(false);
+  }
+  SetFilename(filename, true);
+  if (MainFrame* main_frame = GetMainFrame(); main_frame != nullptr) {
+    main_frame->SetTitle(filename);
   }
   return save;
 }
@@ -65,7 +65,11 @@ bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
   } else {
     PLOT_INFO() << "Opened the project. File: " << filename;
   }
-
+  SetFilename(filename, true);
+  if (MainFrame* main_frame = GetMainFrame(); main_frame != nullptr) {
+    main_frame->SetTitle(filename);
+    main_frame->Redraw();
+  }
   return read;
 }
 

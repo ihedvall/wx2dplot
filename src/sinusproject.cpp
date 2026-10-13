@@ -35,6 +35,7 @@ SinusProject::SinusProject()
   {
     Signal sinus;
     sinus.SetSelected(true);
+    sinus.SetActive(true);
     sinus.SetName("Sinus");
     sinus.SetDescription("This is a sinus wave");
     sinus.SetUnit("V");
@@ -59,6 +60,7 @@ SinusProject::SinusProject()
   {
     Signal cosinus;
     cosinus.SetSelected(true);
+    cosinus.SetActive(false);
     cosinus.SetName("Cosinus");
     cosinus.SetDescription("This is a cosinus wave");
     cosinus.SetUnit("V");

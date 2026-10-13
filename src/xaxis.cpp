@@ -19,7 +19,7 @@ void XAxis::Init(const Project& project) {
   std::string x_unit;
 
   for (const auto& signal : signals) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
     // It is possible to check if it is enabled.

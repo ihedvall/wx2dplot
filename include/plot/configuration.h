@@ -8,6 +8,8 @@
 #include <string>
 #include <map>
 
+#include <wx/xml/xml.h>
+
 #include "plot/layer.h"
 
 namespace plot {
@@ -17,6 +19,7 @@ using LayerList = std::vector<Layer>;
 
 class Configuration {
 public:
+  Configuration();
   [[nodiscard]] int GetVersion() const { return version_; }
 
   void SetName(std::string name) { name_ = std::move(name); }
@@ -36,8 +39,8 @@ public:
 
   [[nodiscard]] const LayerList& GetLayers() const { return layers_; }
   [[nodiscard]] LayerList& GetLayers() { return layers_; }
-  bool ReadXmlFile();
-  bool SaveXmlFile();
+  [[nodiscard]] bool ReadXmlFile();
+  [[nodiscard]] bool SaveXmlFile() const;
 
   void Reset();
 
@@ -50,11 +53,19 @@ private:
   FileList data_files_; ///< *.mf4
   FileList db_files_; ///< *.dbc, *.a2l
   FileList hex_files_; ///< *.s19, *.hex
+  FileList lab_files_; ///< *.lab
   FileList any_files_; ///< *.*
 
   std::vector<Layer> layers_;
 
   static std::wstring FindFile(const std::wstring& data_file);
+  static void ReadFiles(const wxXmlNode& root, FileList& file_list);
+  void ReadLayers(const wxXmlNode& root);
+
+  void SaveConfig(wxXmlNode* root) const;
+  static void SaveFiles(wxXmlNode* root, const FileList& file_list,
+    const std::string& type);
+  void SaveLayers(wxXmlNode* root) const;
 };
 
 }  // namespace plot

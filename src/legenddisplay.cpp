@@ -116,7 +116,7 @@ void LegendDisplay::RedrawY() const {
   const auto& signal_list = project_->GetSignals();
   long line = 0;
   for (const Signal& signal : signal_list) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
 
@@ -169,7 +169,7 @@ void LegendDisplay::RedrawX() const {
 
   const auto& signal_list = project_->GetSignals();
   for (const Signal& signal : signal_list) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
     if (master_signal == nullptr) {
@@ -209,7 +209,7 @@ void LegendDisplay::OnMasterChanged(wxCommandEvent& event) {
   const auto& signal_list = project_->GetSignals();
   int line = 0;
   for (const Signal& signal : signal_list) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
     master_signal = &signal;

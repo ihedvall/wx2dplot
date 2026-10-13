@@ -142,7 +142,7 @@ void MasterDisplay::CalculateMinMax() {
   }
   std::set<double> sorted_list;
   for (const Signal& signal : project_->GetSignals()) {
-    if (!signal.IsSelected()) {
+    if (!signal.IsActive()) {
       continue;
     }
     master_unit_ = signal.GetMasterUnit();
