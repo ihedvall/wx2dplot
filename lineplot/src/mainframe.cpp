@@ -21,7 +21,7 @@
 #include <filesystem>
 #include <string>
 
-#include "../../include/plot/lineplotwindow.h"
+#include "plot/lineplotwindow.h"
 #include "lineplotapp.h"
 #include "lineplotdocument.h"
 #include "plot/plotlogstream.h"
