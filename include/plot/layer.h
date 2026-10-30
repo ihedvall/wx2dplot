@@ -26,6 +26,8 @@ public:
   Layer() = default;
   Layer(Project&& project, LayoutType layout_type);
 
+  bool operator==(const Layer& layer) const;
+
   void SetLayoutType(LayoutType type) { layout_type_ = type; }
   [[nodiscard]] LayoutType GetLayoutType() const { return layout_type_; }
   void SetLayoutTypeAsString(const std::string& type);

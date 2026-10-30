@@ -7,17 +7,15 @@
 #include <plot/plotlogstream.h>
 #include <util/stringutil.h>
 #include <wx/config.h>
-#include <wx/progdlg.h>
 
 #include <atomic>
 #include <chrono>
 #include <filesystem>
-#include <thread>
 
 #include "plot/lineplotwindow.h"
 #include "lineplotapp.h"
 #include "mainframe.h"
-#include "windowid.h"
+
 
 using namespace std::filesystem;
 using namespace util::string;
@@ -29,6 +27,18 @@ wxIMPLEMENT_DYNAMIC_CLASS(LinePlotDocument, wxDocument)
 wxBEGIN_EVENT_TABLE(LinePlotDocument, wxDocument)
 wxEND_EVENT_TABLE()
 
+LinePlotDocument::LinePlotDocument() {
+  modify_timer_.Bind(wxEVT_TIMER, &LinePlotDocument::OnModifyTimer, this);
+  modify_timer_.Start(1000);
+}
+
+LinePlotDocument::~LinePlotDocument() {
+  if (modify_timer_.IsRunning()) {
+    modify_timer_.Stop();
+    modify_timer_.Unbind(wxEVT_TIMER, &LinePlotDocument::OnModifyTimer, this);
+  }
+}
+
 MainFrame* LinePlotDocument::GetMainFrame() {
   return dynamic_cast<MainFrame*>(wxGetApp().GetTopWindow());
 }
@@ -38,7 +48,6 @@ bool LinePlotDocument::OnNewDocument() {
   if (!new_doc) {
     return false;
   }
-  Modify(true);
   UpdateAllViews();
   return true;
 }
@@ -47,7 +56,7 @@ bool LinePlotDocument::DoSaveDocument(const wxString& filename) {
   config_.SetFilename(filename.ToStdWstring());
   const bool save = config_.SaveXmlFile();
   if (save) {
-    Modify(false);
+    orig_config_ = config_;
   }
   SetFilename(filename, true);
   if (MainFrame* main_frame = GetMainFrame(); main_frame != nullptr) {
@@ -64,6 +73,7 @@ bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
     PLOT_ERROR() << "Error reading the project. File: " << filename;
   } else {
     PLOT_INFO() << "Opened the project. File: " << filename;
+    orig_config_ = config_;
   }
   SetFilename(filename, true);
   if (MainFrame* main_frame = GetMainFrame(); main_frame != nullptr) {
@@ -73,9 +83,8 @@ bool LinePlotDocument::DoOpenDocument(const wxString& filename) {
   return read;
 }
 
-bool LinePlotDocument::OnCloseDocument() {
-
-  return true;
+void LinePlotDocument::OnModifyTimer(wxTimerEvent&) {
+  Modify(config_ != orig_config_);
 }
 
 } // namespace bus

@@ -24,6 +24,68 @@ Configuration::Configuration() {
   version_ = kCurrentVersion;
 }
 
+Configuration::Configuration(const Configuration& config)
+  : version_(kCurrentVersion),
+    name_(config.name_),
+    description_(config.description_),
+    filename_(config.filename_),
+    data_files_(config.data_files_),
+    db_files_(config.db_files_),
+    hex_files_(config.hex_files_),
+    lab_files_(config.lab_files_),
+    any_files_(config.any_files_),
+    layers_(config.layers_)
+{
+}
+
+Configuration& Configuration::operator=(const Configuration& config) {
+  if (this == &config) {
+    return *this;
+  }
+  version_ = kCurrentVersion;
+  name_ =config.name_;
+  description_ = config.description_;
+  filename_ = config.filename_;
+  data_files_ = config.data_files_;
+  db_files_ = config.db_files_;
+  hex_files_ = config.hex_files_;
+  lab_files_ = config.lab_files_;
+  any_files_ = config.any_files_;
+  layers_ = config.layers_;
+  return *this;
+}
+
+bool Configuration::operator==(const Configuration& config) const {
+  if (name_ != config.name_) {
+    return false;
+  }
+  if (description_ != config.description_) {
+    return false;
+  }
+  if (filename_ != config.filename_) {
+    return false;
+  }
+  if (data_files_ != config.data_files_) {
+    return false;
+  }
+  if (db_files_ != config.db_files_) {
+    return false;
+  }
+  if (hex_files_ != config.hex_files_) {
+    return false;
+  }
+  if (lab_files_ != config.lab_files_) {
+    return false;
+  }
+  if (any_files_ != config.any_files_) {
+    return false;
+  }
+  if (layers_ != config.layers_) {
+    return false;
+  }
+  return true;
+}
+
 bool Configuration::AddDataFile(const std::wstring& data_file) {
   try {
     std::wstring filename = FindFile(data_file);

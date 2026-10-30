@@ -20,6 +20,11 @@ using LayerList = std::vector<Layer>;
 class Configuration {
 public:
   Configuration();
+  Configuration(const Configuration& config);
+  Configuration& operator = (const Configuration& config);
+  bool operator == (const Configuration& config) const;
+
+
   [[nodiscard]] int GetVersion() const { return version_; }
 
   void SetName(std::string name) { name_ = std::move(name); }

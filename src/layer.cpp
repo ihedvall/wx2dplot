@@ -41,6 +41,16 @@ Layer::Layer(Project&& project, LayoutType layout_type)
     layout_type_(layout_type) {
   
 }
+bool Layer::operator==(const Layer& layer) const {
+  if (layout_type_ != layer.layout_type_) {
+    return false;
+  }
+  if (displays_ != layer.displays_) {
+    return false;
+  }
+
+  return true;
+}
 
 void Layer::SetLayoutTypeAsString(const std::string& type) {
   for (size_t index = 0; index < kLayoutList.size(); ++index) {

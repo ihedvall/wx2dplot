@@ -21,7 +21,7 @@
 #include <filesystem>
 #include <string>
 
-#include "../../include/plot/lineplotwindow.h"
+#include "plot/lineplotwindow.h"
 #include "lineplotapp.h"
 #include "lineplotdocument.h"
 #include "plot/plotlogstream.h"
@@ -29,7 +29,6 @@
 #include "windowid.h"
 
 // ReSharper disable once CppUnusedIncludeDirective
-#include "img/appicon.xpm"
 
 using namespace util;
 using namespace util::log;
@@ -39,6 +38,9 @@ using namespace std::chrono_literals;
 using namespace std::filesystem;
 using namespace boost::algorithm;
 
+namespace {
+#include "img/appicon.xpm"
+}
 namespace plot {
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxDocParentFrame)

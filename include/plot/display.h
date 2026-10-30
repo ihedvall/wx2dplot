@@ -21,6 +21,8 @@ enum class DisplayType {
 
 class Display {
 public:
+  bool operator==(const Display& display) const;
+
   void SetDisplayType(DisplayType type) { display_type_ = type; }
   [[nodiscard]] DisplayType GetDisplayType() const { return display_type_; }
 
