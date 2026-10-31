@@ -49,6 +49,7 @@ public:
 
   void Reset();
 
+  static std::wstring FindFile(const std::wstring& data_file);
 private:
   int version_ = 1;
   std::string name_;
@@ -63,7 +64,7 @@ private:
 
   std::vector<Layer> layers_;
 
-  static std::wstring FindFile(const std::wstring& data_file);
+
   static void ReadFiles(const wxXmlNode& root, FileList& file_list);
   void ReadLayers(const wxXmlNode& root);
 
