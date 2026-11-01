@@ -23,6 +23,7 @@ project(wx2DPlot
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_DEBUG_POSTFIX d)
 
+include (script/boost.cmake)
 include (script/wxwidgets.cmake)
 include (script/wxmathplot.cmake)
 
@@ -59,6 +60,7 @@ target_include_directories(wx2dplot PUBLIC
 #target_include_directories(wx2dplot PRIVATE ${wxmathplot_SOURCE_DIR})
 
 target_link_libraries(wx2dplot PRIVATE
+        Boost::headers
         wxmathplot_static
         wxWidgets::wxWidgets)
 

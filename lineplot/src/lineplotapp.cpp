@@ -138,12 +138,12 @@ bool LinePlotApp::OnInit() {
   if (doc == nullptr && !data_file_.empty()) {
     doc_manager->CreateNewDocument();
     if (doc = MainFrame::GetDocument(); doc != nullptr) {
-      doc->GetConfig().AddDataFile(data_file_);
+      doc->GetConfig().AddFile(data_file_);
     }
   } else if (doc == nullptr) {
     doc_manager->CreateNewDocument();
   } else if (doc != nullptr && !data_file_.empty()) {
-    doc->GetConfig().AddDataFile(data_file_);
+    doc->GetConfig().AddFile(data_file_);
     doc->UpdateAllViews();
   }
   if (doc = MainFrame::GetDocument(); doc != nullptr) {

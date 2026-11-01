@@ -6,13 +6,17 @@
 #include "plot/configuration.h"
 
 #include <filesystem>
+#include <array>
+#include <functional>
+
+#include <boost/algorithm/string.hpp>
 
 #include <wx/xml/xml.h>
-
 
 #include "plot/plotlogstream.h"
 
 using namespace std::filesystem;
+using namespace boost::algorithm;
 
 namespace {
 constexpr int kCurrentVersion = 1;
@@ -86,21 +90,103 @@ bool Configuration::operator==(const Configuration& config) const {
   return true;
 }
 
-bool Configuration::AddDataFile(const std::wstring& data_file) {
+std::wstring_view Configuration::GetFileWildcardFilter() {
+  constexpr std::wstring_view filter =
+L"MDF Data Files (*.mdf;*.mf4;*.mf3;*.dat)|*.mdf;*.mf4;*.mf3;*.dat"
+"|Database Files (*.dbc;*.dbf;*.a2l;*.flx;*.ldf)|*.dbc;*.dbf;*.a2l;*.flx;*.ldf"
+"|Selection List Files (*.lab)|*lab"
+"|Binary Files (*.hex;*.bin;*.s19;*.s28;*.s37)|*.hex;*.bin;*.s19;*.s28;*.s37"
+"|All Files (*.*)|*.*";
+  return filter;
+}
+
+bool Configuration::AddFile(const std::wstring& file) {
   try {
-    std::wstring filename = FindFile(data_file);
-    const path fullname(data_file);
-    const path stem = fullname.stem();
-    if (exists(fullname)) {
-      data_files_.emplace( stem.string(), data_file );
+    std::wstring filename = FindFile(file);
+    const path fullname(filename);
+    const std::wstring extension = fullname.extension().wstring();
+    if (!exists(fullname)) {
+      throw std::runtime_error("File does not exist");
+    }
+    if (is_regular_file(fullname)) {
+      throw std::runtime_error("File is not a regular file");
+    }
+    const bool mdf = iequals(extension, L".mdf")
+                     || iequals(extension, L".mf4")
+                     || iequals(extension, L".mf3")
+                     || iequals(extension, L".dat");
+    const bool database = iequals(extension, L".dbc")
+                          || iequals(extension, L".a2l")
+                          || iequals(extension, L".flx")
+                          || iequals(extension, L".ldf")
+                          || iequals(extension, L".sqlite");
+    const bool lab = iequals(extension, L".lab");
+    const bool hex = iequals(extension, L".hex")
+                     || iequals(extension, L".bin")
+                     || iequals(extension, L".s19")
+                     || iequals(extension, L".s28")
+                     || iequals(extension, L".s37");
+    if (mdf) {
+      data_files_.emplace_back(std::move(filename));
+    } else if (database) {
+      db_files_.emplace_back(std::move(filename));
+    } else if (lab) {
+      lab_files_.emplace_back(std::move(filename));
+    } else if (hex) {
+      hex_files_.emplace_back(std::move(filename));
     } else {
-      throw std::runtime_error("File does not exist: " + fullname.string());
+      any_files_.emplace_back(std::move(filename));
     }
   } catch (const std::exception& err) {
-    PLOT_ERROR() << "File path error. Error: " << err.what();
+    const wxString fname(filename_);
+    PLOT_ERROR() << "File path error. Error: " << err.what()
+      << ", File: " << fname;
     return false;
   }
   return true;
+}
+
+void Configuration::DelFile(const std::wstring& file) {
+  std::array<std::reference_wrapper<FileList>, 5> file_list = {
+    data_files_, db_files_, lab_files_, hex_files_, any_files_
+  };
+  try {
+    // First try is to use the full path
+    const path fullname(file);
+    for (auto& list : file_list ) {
+      FileList& flist = list.get();
+      for (auto itr = flist.begin();itr != flist.end(); ++itr) {
+        const path fname(*itr);
+        if (fullname == fname) {
+          flist.erase(itr);
+          return;
+        }
+      }
+    }
+
+    // Next try with the filename
+    const std::wstring filename = fullname.filename().wstring();
+    for (auto& list : file_list ) {
+      FileList& flist = list.get();
+      for (auto itr = flist.begin();itr != flist.end(); ++itr) {
+        const path fname(*itr);
+        if (iequals(filename,fname.filename().wstring()) ) {
+          flist.erase(itr);
+          return;
+        }
+      }
+    }
+  } catch (const std::exception& err) {
+    const wxString fname(file);
+    PLOT_ERROR() << "File deletion error. Error: " << err.what()
+      << ", File: " << fname;
+    return;
+  }
+  {
+    const wxString fname(file);
+    PLOT_ERROR() << "File deletion error. Error: File not found"
+      << ", File: " << fname;
+  }
 }
 
 bool Configuration::ReadXmlFile() {
@@ -205,10 +291,11 @@ void Configuration::Reset() {
 }
 
 std::wstring Configuration::FindFile(const std::wstring& data_file) {
+  const wxString fname(data_file);
   try {
     const path fullname(data_file);
     if (exists(fullname)) {
-      return fullname.wstring();
+      return data_file;
     }
     const path file_name = fullname.filename();
     // Search in sub-directories
@@ -244,7 +331,8 @@ std::wstring Configuration::FindFile(const std::wstring& data_file) {
     }
   }
   catch (const std::exception& err) {
-    PLOT_ERROR() << "Failed to find the file. Error: " << err.what();
+    PLOT_ERROR() << "Failed to find the file. Error: " << err.what()
+      << ", File: " << fname;
   }
   return data_file;
 }
@@ -257,19 +345,8 @@ void Configuration::ReadFiles(const wxXmlNode& root, FileList& file_list) {
       continue;
     }
     if (child_node->GetName() == "File") {
-      std::string name = child_node->GetAttribute("name",
-        wxEmptyString).utf8_string();
-      const std::wstring filename = child_node->GetNodeContent().ToStdWstring();
-      if (name.empty()) {
-        try {
-          path fullname(filename);
-          name = fullname.stem().string();
-        } catch (const std::exception& err) {
-          PLOT_ERROR() << "Failed to read file name. Error: " << err.what();
-          continue;
-        }
-      }
-      file_list.emplace(name, filename);
+      std::wstring filename = child_node->GetNodeContent().ToStdWstring();
+      file_list.emplace_back(std::move(filename));
     }
   }
 }
@@ -314,12 +391,19 @@ void Configuration::SaveFiles(wxXmlNode* root, const FileList& file_list,
   const std::string& type) {
   auto* files = new wxXmlNode(wxXML_ELEMENT_NODE, type);
 
-  for (const auto& [name, file_path] : file_list) {
-    auto* file = new wxXmlNode(wxXML_ELEMENT_NODE, "File");
-    file->AddAttribute("name", wxString::FromUTF8(name));
-    new wxXmlNode(file, wxXML_TEXT_NODE, wxEmptyString,
-      wxString(file_path));
-    files->AddChild(file);
+  for (const auto& file_path : file_list) {
+    try {
+      const path fullname(file_path);
+      const std::wstring name = fullname.stem().wstring();
+      auto* file = new wxXmlNode(wxXML_ELEMENT_NODE, "File");
+      file->AddAttribute("name", wxString(name));
+      new wxXmlNode(file, wxXML_TEXT_NODE, wxEmptyString,
+        wxString(file_path));
+      files->AddChild(file);
+    }
+    catch (const std::exception& error) {
+      PLOT_ERROR() << "Failed to save file. Error: " <<  error.what();
+    }
   }
   root->AddChild(files);
 }

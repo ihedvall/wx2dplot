@@ -1,6 +1,10 @@
 #include <wx/msw/wx.rc>
 
-appicon   ICON    "img/appicon.ico"
-config    RCDATA  "img/config.png"
-layers    RCDATA  "img/layers.png"
-lineplot  RCDATA  "img/lineplot.png"
+appicon       ICON    "img/appicon.ico"
+config        RCDATA  "img/config.png"
+layers        RCDATA  "img/layers.png"
+lineplot      RCDATA  "img/lineplot.png"
+folder_close  RCDATA  "img/folder_close.png"
+folder_open   RCDATA  "img/folder_open.png"
+mf4           RCDATA  "img/mf4.png"
+document_text RCDATA  "img/document_text.png"

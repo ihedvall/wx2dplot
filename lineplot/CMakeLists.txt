@@ -9,7 +9,7 @@ project(LinePlot
 set(CMAKE_CXX_STANDARD 23)
 
 include (../script/utillib.cmake)
-include (../script/boost.cmake)
+
 
 add_executable(lineplot
         src/windowid.h

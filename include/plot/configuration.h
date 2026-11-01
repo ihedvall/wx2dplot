@@ -6,7 +6,8 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <vector>
+#include <string_view>
 
 #include <wx/xml/xml.h>
 
@@ -14,7 +15,7 @@
 
 namespace plot {
 
-using FileList = std::map<std::string, std::wstring>;
+using FileList = std::vector<std::wstring>;
 using LayerList = std::vector<Layer>;
 
 class Configuration {
@@ -38,7 +39,15 @@ public:
   void SetFilename(std::wstring filename) { filename_ = std::move(filename); }
   [[nodiscard]] const std::wstring& GetFilename() const { return filename_; }
 
-  bool AddDataFile(const std::wstring& data_file);
+  static std::wstring_view GetFileWildcardFilter();
+  bool AddFile(const std::wstring& file);
+  void DelFile(const std::wstring& file);
+
+  [[nodiscard]] const FileList& GetDataFiles() const { return data_files_; }
+  [[nodiscard]] const FileList& GetDbFiles() const { return db_files_; }
+  [[nodiscard]] const FileList& GetHexFiles() const { return hex_files_; }
+  [[nodiscard]] const FileList& GetLabFiles() const { return lab_files_; }
+  [[nodiscard]] const FileList& GetAnyFiles() const { return any_files_; }
 
   void AddLayer(Layer layer) { layers_.emplace_back(std::move(layer)); }
 
