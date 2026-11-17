@@ -28,6 +28,9 @@ public:
 
   bool operator==(const Layer& layer) const;
 
+  void SetIndex(size_t index) { index_ = index; }
+  [[nodiscard]] size_t GetIndex() const { return index_; }
+
   void SetLayoutType(LayoutType type) { layout_type_ = type; }
   [[nodiscard]] LayoutType GetLayoutType() const { return layout_type_; }
   void SetLayoutTypeAsString(const std::string& type);
@@ -38,6 +41,7 @@ public:
 
 private:
   LayoutType layout_type_ = LayoutType::kCustomLayout;
+  size_t index_ = 0; ///< User defined index
   std::vector<Display> displays_;
 
   void ReadSignals(const wxXmlNode& root);

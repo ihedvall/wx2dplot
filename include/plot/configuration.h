@@ -49,7 +49,16 @@ public:
   [[nodiscard]] const FileList& GetLabFiles() const { return lab_files_; }
   [[nodiscard]] const FileList& GetAnyFiles() const { return any_files_; }
 
-  void AddLayer(Layer layer) { layers_.emplace_back(std::move(layer)); }
+  Layer& AddLayer(Layer layer);
+  void DeleteLayer(size_t index);
+  void DeleteLayer(std::string name);
+
+
+  [[nodiscard]] const Layer* GetLayer(size_t index) const;
+  [[nodiscard]] Layer* GetLayer(size_t index);
+
+  [[nodiscard]] const Layer* GetLayer(const std::string& name) const;
+  [[nodiscard]] Layer* GetLayer(const std::string& name);
 
   [[nodiscard]] const LayerList& GetLayers() const { return layers_; }
   [[nodiscard]] LayerList& GetLayers() { return layers_; }

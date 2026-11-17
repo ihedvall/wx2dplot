@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <array>
 #include <functional>
+#include <algorithm>
 
 #include <boost/algorithm/string.hpp>
 
@@ -189,6 +190,55 @@ void Configuration::DelFile(const std::wstring& file) {
   }
 }
 
+Layer& Configuration::AddLayer(Layer layer) {
+  layers_.emplace_back(std::move(layer));
+  return layers_.back();
+}
+
+void Configuration::DeleteLayer(size_t index) {
+  std::erase_if(layers_, [&](const Layer& layer)->bool {
+    return layer.GetIndex() == index;
+  });
+}
+
+// ReSharper disable once CppPassValueParameterByConstReference
+void Configuration::DeleteLayer(std::string name) {
+  std::erase_if(layers_, [&](const Layer& layer)->bool {
+    return layer.GetName() == name;
+  });
+}
+
+const Layer* Configuration::GetLayer(size_t index) const {
+  const auto itr = std::ranges::find_if(layers_,
+    [&] (const Layer& layer) ->bool {
+    return layer.GetIndex() == index;
+  });
+  return itr == layers_.cend() ? nullptr : &(*itr);
+}
+
+Layer* Configuration::GetLayer(size_t index) {
+  auto itr = std::ranges::find_if(layers_,
+    [&] (const Layer& layer) ->bool {
+    return layer.GetIndex() == index;
+  });
+  return itr == layers_.end() ? nullptr : &(*itr);
+}
+
+const Layer* Configuration::GetLayer(const std::string& name) const {
+  const auto itr = std::ranges::find_if(layers_,
+  [&] (const Layer& layer) ->bool {
+    return layer.GetName() == name;
+  });
+  return itr == layers_.cend() ? nullptr : &(*itr);
+}
+
+Layer* Configuration::GetLayer(const std::string& name) {
+  auto itr = std::ranges::find_if(layers_,
+  [&] (const Layer& layer) ->bool {
+    return layer.GetName() == name;
+  });
+  return itr == layers_.end() ? nullptr : &(*itr);
+}
 bool Configuration::ReadXmlFile() {
   try {
     const wxString file(filename_);
