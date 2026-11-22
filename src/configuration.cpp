@@ -109,7 +109,7 @@ bool Configuration::AddFile(const std::wstring& file) {
     if (!exists(fullname)) {
       throw std::runtime_error("File does not exist");
     }
-    if (is_regular_file(fullname)) {
+    if (!is_regular_file(fullname)) {
       throw std::runtime_error("File is not a regular file");
     }
     const bool mdf = iequals(extension, L".mdf")

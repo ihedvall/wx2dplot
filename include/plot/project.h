@@ -56,6 +56,8 @@ public:
   }
 
   [[nodiscard]] long GetSignal(const std::string& name) const;
+  [[nodiscard]] Signal* GetSignal(const void* user_object);
+  [[nodiscard]] const Signal* GetSignal(const void* user_object) const;
   [[nodiscard]] Signal* GetSignal(long index);
   [[nodiscard]] const Signal* GetSignal(long index) const;
   void SortSignals();

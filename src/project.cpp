@@ -73,6 +73,28 @@ long Project::GetSignal(const std::string &name) const {
   return -1;
 }
 
+Signal* Project::GetSignal(const void* user_object) {
+  auto itr = std::ranges::find_if(
+    signals_, [&](const auto& signal) -> bool {
+    return signal.GetUserObject() == user_object;
+  });
+  if (itr == signals_.end()) {
+    return nullptr;
+  }
+  return &(*itr);
+}
+
+const Signal* Project::GetSignal(const void* user_object) const {
+  const auto itr = std::ranges::find_if(
+    signals_, [&](const auto& signal) -> bool {
+    return signal.GetUserObject() == user_object;
+  });
+  if (itr == signals_.cend()) {
+    return nullptr;
+  }
+  return &(*itr);
+}
+
 Signal* Project::GetSignal(long index) {
   if (index < 0 || index >= static_cast<long>(signals_.size())) {
     return nullptr;
@@ -106,14 +128,14 @@ double Project::GetMasterReference() const {
 }
 
 std::string Project::GetMasterName() const {
-  if (const Signal* signal = GetSignal(0); signal != nullptr) {
+  if (const Signal* signal = GetSignal(0L); signal != nullptr) {
     return signal->GetMasterName();
   }
   return {};
 }
 
 std::string Project::GetMasterUnit() const {
-  if (const Signal* signal = GetSignal(0); signal != nullptr) {
+  if (const Signal* signal = GetSignal(0L); signal != nullptr) {
     return signal->GetMasterUnit();
   }
   return {};

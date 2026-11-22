@@ -58,10 +58,9 @@ target_include_directories(wx2dplot PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 #target_include_directories(wx2dplot PRIVATE ${wxmathplot_SOURCE_DIR})
-
+target_link_libraries(wx2dplot PUBLIC wxmathplot_static)
 target_link_libraries(wx2dplot PRIVATE
         Boost::headers
-        wxmathplot_static
         wxWidgets::wxWidgets)
 
 if (PLOT_BUILD_TOOL)
