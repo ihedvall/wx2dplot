@@ -121,10 +121,10 @@ wxString AlphaNumericDisplay::OnGetItemText(long item, long column) const {
     if (const auto& enum_list = signal->GetEnumList();
         !enum_list.empty()) {
       const std::string enum_value = signal->GetEnum(
-        static_cast<int>(value.GetValue()));
+        static_cast<int>(value.GetValue<int>()));
       text = wxString::FromUTF8(enum_value);
     } else {
-      text = wxString::FromDouble(value.GetValue(), precision);
+      text = wxString::FromDouble(value.GetValue<double>(), precision);
     }
     break;
   }

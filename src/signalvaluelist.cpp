@@ -10,6 +10,7 @@ namespace plot {
 SignalValueList::SignalValueList(const SignalValueList& list) {
   std::lock_guard lock(value_mutex_);
   updated_ = true;
+  type_ = list.type_;
   value_list_ = list.value_list_;
   master_list_ = list.master_list_;
   min_ = list.min_;
@@ -24,6 +25,7 @@ SignalValueList& SignalValueList::operator=(const SignalValueList& list) {
 
   std::lock_guard lock(value_mutex_);
   updated_ = true;
+  type_ = list.type_;
   value_list_ = list.value_list_;
   master_list_ = list.master_list_;
   min_ = list.min_;
@@ -38,6 +40,16 @@ void SignalValueList::SetUpdated(bool updated) {
 
 bool SignalValueList::IsUpdated() const {
   return updated_;
+}
+
+void SignalValueList::SetType(SignalValueType type) {
+  std::lock_guard lock(value_mutex_);
+  type_ = type;
+}
+
+SignalValueType SignalValueList::GetType() const {
+  std::lock_guard lock(value_mutex_);
+  return type_;
 }
 
 SignalValue SignalValueList::Min() const {
@@ -162,12 +174,22 @@ void SignalValueList::CalculateMinMaxAvg() const {
   if (value_list_.empty()) {
     return;
   }
+  switch (type_) {
+    case SignalValueType::kInt:
+    case SignalValueType::kUint:
+    case SignalValueType::kFloat:
+      // Min, Max and average can be calculated
+      break;
+
+    default: // No meaning with min amx and averge
+      return;
+  }
   average_ = {0.0,0.0, false};
   double sum = 0.0;
   size_t count = 0;
   bool first_value = true;
   for (const SignalValue& value : value_list_) {
-    const double val = value.GetValue();
+    const auto val = value.GetValue<double>();
     if (first_value) {
       min_ = value;
       max_ = value;
@@ -204,7 +226,7 @@ void SignalValueList::GetValueList(std::vector<double>& y_values,
       if (!value.IsValid()) {
         continue;
       }
-      y_values.emplace_back(value.GetValue());
+      y_values.emplace_back(value.GetValue<double>());
       x_values.emplace_back(value.GetMasterValue());
     }
   } catch (const std::exception&) {

@@ -30,12 +30,18 @@ namespace {
 }
 
 namespace plot {
+
+void Signal::SetType(SignalValueType type) {
+  type_ = type;
+  value_list_.SetType(type);
+}
+
 double Signal::GetMin() const {
   if (min_ < max_) {
     return min_;
   }
   const SignalValue min = value_list_.Min();
-  return min.IsValid() ? min.GetValue() : 0.0;
+  return min.IsValid() ? min.GetValue<double>() : 0.0;
 }
 
 double Signal::GetMax() const {
@@ -43,7 +49,7 @@ double Signal::GetMax() const {
     return max_;
   }
   const SignalValue max = value_list_.Max();
-  return max.IsValid() ? max.GetValue() : 0.0;
+  return max.IsValid() ? max.GetValue<double>() : 0.0;
 }
 
 std::string Signal::GetEnum(int value) const {

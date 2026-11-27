@@ -131,7 +131,7 @@ void LegendDisplay::RedrawY() const {
       y_list_view_->SetItem(item, 1, "*");
     } else {
       y_list_view_->SetItem(item, 1,
-        wxString::FromDouble(value.GetValue(), precision));
+        wxString::FromDouble(value.GetValue<double>(), precision));
     }
     y_list_view_->SetItem(item, 2,
       wxString::FromUTF8(signal.GetUnit()));
@@ -219,7 +219,8 @@ void LegendDisplay::OnMasterChanged(wxCommandEvent& event) {
     if (!value.IsValid()) {
       y_list_view_->SetItem(item, 1, "*");
     } else {
-      y_list_view_->SetItem(item, 1, wxString::FromDouble(value.GetValue(), precision));
+      y_list_view_->SetItem(item, 1,
+        wxString::FromDouble(value.GetValue<double>(), precision));
     }
     ++line;
   }

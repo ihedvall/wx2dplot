@@ -50,7 +50,9 @@ public:
   [[nodiscard]] const std::vector<Signal>& GetSignals() const {
     return signals_;
   }
-
+  [[nodiscard]] std::vector<Signal>& GetSignals() {
+    return signals_;
+  }
   void AddSignal(const Signal& signal) {
     signals_.emplace_back(signal);
   }

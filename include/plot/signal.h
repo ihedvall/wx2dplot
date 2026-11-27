@@ -6,7 +6,6 @@
 
 #include <string>
 #include <map>
-#include <mutex>
 #include <algorithm>
 #include <optional>
 
@@ -38,6 +37,9 @@ public:
 
   void SetActive(bool active) { active_ = active; }
   [[nodiscard]] bool IsActive() const { return active_; }
+
+  void SetType(SignalValueType type);
+  [[nodiscard]] SignalValueType GetType() const { return type_; }
 
   void SetName(std::string name) { name_ = std::move(name); }
   [[nodiscard]] const std::string& GetName() const { return name_; }
@@ -102,6 +104,7 @@ public:
   bool selected_ = false; ///< Selected means that it can be used in the display
   bool active_ = true; ///< Show means that it shall be displayed
 
+  SignalValueType type_ = SignalValueType::kUndefined;
   std::string name_; ///< This will be used as a signal label.
   std::string description_;
   std::string unit_;

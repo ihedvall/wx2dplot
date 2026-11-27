@@ -6,40 +6,70 @@
 
 namespace plot {
 
+SignalValue::SignalValue(SignalValueType type) : type_(type) {}
+
 SignalValue::SignalValue(double value, double master_value, bool valid) {
+  type_ = SignalValueType::kFloat;
   SetValue(value, master_value, valid);
 }
 
 
-SignalValue::SignalValue(const SignalValue& value) {
- // Note that the updated flag is not copied
- SetValue(value.value_, value.master_value_, value.valid_);
+SignalValue::SignalValue(const SignalValue& value) :
+type_(value.type_),
+updated_(true),
+valid_(value.valid_),
+value_(value.value_),
+master_value_(value.master_value_)
+{
 }
 
 SignalValue& SignalValue::operator=(const SignalValue& value) {
  if (this == &value) {
   return *this;
  }
- SetValue(value.value_, value.master_value_, value.valid_);
+ type_ = value.type_;
+ valid_ = value.valid_;
+ value_ = value.value_;
+ master_value_ = value.master_value_;
+ updated_ = true;
  return *this;
 }
 
 bool SignalValue::operator<(const SignalValue& value) const {
-  return value_ < value.value_;
+  try {
+    switch (type_) {
+      case SignalValueType::kInt:
+        return std::any_cast<int64_t>(value_) <
+           std::any_cast<int64_t>(value.value_);
+
+     case SignalValueType::kUint:
+        return std::any_cast<uint64_t>(value_) <
+          std::any_cast<uint64_t>(value.value_);
+
+      case SignalValueType::kFloat:
+        return std::any_cast<double>(value_) <
+          std::any_cast<double>(value.value_);
+
+      case SignalValueType::kString:
+        return std::any_cast<std::string>(value_) <
+          std::any_cast<std::string>(value.value_);
+
+      case SignalValueType::kBoolean:
+        return std::any_cast<bool>(value_) <
+          std::any_cast<bool>(value.value_);
+
+      default:
+        break;
+    }
+  } catch (const std::exception&) {
+
+  }
+
+  return false;
 }
 
-void SignalValue::SetValue(double value, double master_value, bool valid) {
- value_ = value;
- master_value_ = master_value;
- valid_ = valid;
- updated_ = true;
-}
 
-bool SignalValue::GetValue(double &value, double &master_value) const {
- value = value_;
- master_value = master_value_;
- updated_ = false;
- return valid_;
-}
+
+
 
 } // plot
